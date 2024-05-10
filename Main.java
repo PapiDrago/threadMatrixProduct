@@ -1,7 +1,7 @@
 public class Main{
     public static void main(String args[]){
         int k, n; //k=colonne, n=righe
-        int a[][] = initMatrix(2, 2);
+        int a[][] = initMatrix(2, 3);
         int b[][] = initMatrix(2, 2);
         printMatrix(a);
         printMatrix(b);
@@ -29,13 +29,17 @@ public class Main{
     }
 
     public static int[][] matrixProd(int[][] a, int[][] b){
+        if(a[0].length != b.length) {
+            throw new IllegalArgumentException("Il numero di colonne di A "+
+                                    "deve essere uguale al numero di righe di B!");
+        } 
         int c[][] = new int[a.length][b[0].length];
-        for(int i = 0; i<a.length; i++){
-            for(int j = 0; j<b[0].length; j++){
-                for (int k = 0; k < a[0].length; k++){
-                    c[i][j] = c[i][j] + a[i][k] * b[k][j];
+        for(int rowA = 0; rowA<a.length; rowA++){
+            for(int colB = 0; colB<b[0].length; colB++){
+                for (int colA = 0; colA < a[0].length; colA++){
+                    c[rowA][colB] = c[rowA][colB] + a[rowA][colA] * b[colA][colB];
                 }
-        }
+            }
         }
         return c;
     }
