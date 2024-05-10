@@ -7,7 +7,7 @@ public class Main{
         int b[][] = matrices[1];
         printMatrix(a);
         printMatrix(b);
-        //Thread[] threads = new Thread[];
+        Thread[] threads = new Thread[a.length*b[0].length];
         printMatrix(matrixProd(a, b));
     }
 
