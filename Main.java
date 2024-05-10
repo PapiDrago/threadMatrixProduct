@@ -2,7 +2,7 @@ public class Main{
     public static void main(String args[]){
         int k, n; //k=colonne, n=righe
         int a[][] = initMatrix(2, 3);
-        int b[][] = initMatrix(2, 2);
+        int b[][] = initMatrix(3, 2);
         printMatrix(a);
         printMatrix(b);
         printMatrix(matrixProd(a, b));
@@ -36,9 +36,11 @@ public class Main{
         int c[][] = new int[a.length][b[0].length];
         for(int rowA = 0; rowA<a.length; rowA++){
             for(int colB = 0; colB<b[0].length; colB++){
+                int sum = 0;
                 for (int colA = 0; colA < a[0].length; colA++){
-                    c[rowA][colB] = c[rowA][colB] + a[rowA][colA] * b[colA][colB];
+                    sum = sum + a[rowA][colA] * b[colA][colB];
                 }
+                c[rowA][colB] = sum;
             }
         }
         return c;
