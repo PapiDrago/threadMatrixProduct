@@ -1,21 +1,29 @@
 public class RowColumnProduct implements Runnable {
-    private int row[];
-    private int col[];
+    private int nRow;
+    private int nCol;
     private int product;
-    public RowColumnProduct(int row[], int column[]) {
+    private int a[][];
+    private int b[][];
+    private int matrix[][];
+    
+    public RowColumnProduct(int a[][], int b[][], int nRow,
+                        int nCol, int[][] matrix) {
         super();
-        this.row = row;
-        this.col = column;
+        this.a = a;
+        this.b = b;
+        this.nRow = nRow;
+        this.nCol = nCol;
+        this.matrix = matrix;
         
     }
    
     @Override
     public void run() {
         int sum = 0;
-        for (int i = 0; i < this.row.length; i++){
-            sum = sum + this.row[i] * this.col[i];
+        for (int i = 0; i < this.a.length; i++){
+            sum = sum + this.a[nRow][i] * this.b[i][nCol];
         }
-        this.product = sum;
+        this.matrix[nRow][nCol] = sum;
         
     }
     

@@ -1,13 +1,31 @@
 import java.util.regex.Pattern;
 
 public class Main{
-    public static void main(String args[]){
+    public static void main(String args[]) throws InterruptedException {
         int matrices[][][] = initMatricesFromArguments(args);
         int a[][] = matrices[0];
         int b[][] = matrices[1];
         printMatrix(a);
         printMatrix(b);
-        Thread[] threads = new Thread[a.length*b[0].length];
+        int c[][] = new int[a.length][b[0].length];
+        int nCEntries = a.length*b[0].length;
+        Thread[] threads = new Thread[nCEntries];
+        RowColumnProduct products[] = new RowColumnProduct[nCEntries];
+        initThreadProducts(products, a, b, c);
+        for(int i = 0; i<threads.length; i++){
+            
+            threads[i] = new Thread(products[i]);
+        }
+        
+        for (int k=0; k<threads.length; k++) {
+            threads[k].start();
+        }
+        for (int k=0; k<threads.length; k++) {
+            threads[k].join();
+            printMatrix(c);
+        }
+        printMatrix(c);
+        System.out.println();
         printMatrix(matrixProd(a, b));
     }
 
@@ -30,6 +48,17 @@ public class Main{
             System.out.println();
         }
     }
+    public static void initThreadProducts(RowColumnProduct[] products,
+                                        int[][] a, int b[][], int c[][]){
+        int i = 0;
+        for (int rowA = 0; rowA<a.length; rowA++) {
+            for (int colB = 0; colB<b[0].length; colB++){
+                products[i] = new RowColumnProduct(a, b, rowA, colB, c);
+                i++;
+            }
+        }
+    }
+
 
     public static int[][] matrixProd(int[][] a, int[][] b){
         if(a[0].length != b.length) {
