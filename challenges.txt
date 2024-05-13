@@ -1,0 +1,13 @@
+P1: Ho usato Thread per implementare il prodotto riga-colonna.
+Tutto cio' funziona. Si noti che tutti questi thread accedono
+alla stessa risorsa in modo non sincrinizzato. Tuttavia non c'e'
+nessun pericolo di incosistenza dei dati perche' le scritture
+avvengono a indirizzi di memoria diversi (dello stesso spazio).
+Il problema nasce nel momento in cui voglio inserire una lettura
+della matrice a cavallo delle operazioni di prodotto.
+Ho dato il compito di continuare a leggere la matrice a un altro
+thread. Putroppo questo thread continuava a stampare la matrice
+come se non fosse stata oggetto di nessuna modifica.
+Questo accade perche' non e' stata fissata nessuna happens-before
+relationships, ovvero non c'e' nessuna garanzia che le scritture
+di uno statement siano visibili da un altro statement.
