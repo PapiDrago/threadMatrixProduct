@@ -24,7 +24,10 @@ public class RowColumnProduct implements Runnable {
             sum = sum + this.a[nRow][i] * this.b[i][nCol];
         }
         this.matrix[nRow][nCol] = sum;
-        
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {}
+           
     }
     
     public int getProduct() {

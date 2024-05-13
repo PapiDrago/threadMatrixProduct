@@ -1,3 +1,5 @@
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 public class Main{
@@ -7,7 +9,7 @@ public class Main{
         int b[][] = matrices[1];
         printMatrix(a);
         printMatrix(b);
-        int c[][] = new int[a.length][b[0].length];
+        int c[][] = new int[a.length][b[0].length];//
         int nCEntries = a.length*b[0].length;
         Thread[] threads = new Thread[nCEntries];
         RowColumnProduct products[] = new RowColumnProduct[nCEntries];
@@ -20,13 +22,17 @@ public class Main{
         for (int k=0; k<threads.length; k++) {
             threads[k].start();
         }
+        AtomicBoolean AreThreadsRunning = new AtomicBoolean(true);
+        new Thread(()->{while(AreThreadsRunning.get())
+                            {System.out.print("\nCurrent state: \n");
+                                printMatrix(c);}}).start();
         for (int k=0; k<threads.length; k++) {
             threads[k].join();
-            printMatrix(c);
         }
+        AreThreadsRunning.set(false);
         printMatrix(c);
-        System.out.println();
-        printMatrix(matrixProd(a, b));
+        //System.out.println();
+        //printMatrix(matrixProd(a, b));
     }
 
     public static int[][] initMatrix(int rows, int columns) {
