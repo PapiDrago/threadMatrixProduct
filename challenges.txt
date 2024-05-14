@@ -26,12 +26,21 @@ dello stesso stato della matrice.
 Ho provato a implementare delle stampe più granulari dello stato
 della matrice usando un wait nel blocco synchronized e un
 notify nel blocco synchronized del thread di stampa.
-Il risultato non è stato soddisfaccente perche' non e'
+Il risultato non è stato soddisfacente perche' non e'
 detto che dopo il notify vada il thread che prima era in attesa.
 Il più delle volte è avvenuta una situazione di deadlock
 in cui i thread dei prodotti avevano finito e il thread della
 stampa è stato messo in esecuzione dopo gli altri e dunque è
 andato in uno stato di attesa indefinita.
+
+La classe 'AtomicBoolean' modella il concetto di variabile
+booleana che puo' essere scritta/letta in un'operazione atomica.
+Questa si e' resa necessaria per far terminare il thread
+di stampa nel momento in cui tutti i thread dei prodotti
+sono terminati. In generale serve per leggere dati
+consistenti.
+Dichiarare una variabile 'volatile' fa si che le scritture 
+e le letture di essa siano operazioni atomiche.
 
 Wait è un metodo dell'oggetto. Deve essere invocato
 sull'oggetto di cui il thread possiede il lock e deve essere
@@ -43,4 +52,6 @@ un blocco synchronized.
 In realtà la stampa della matrice funziona anche se non è, la
 sua reference, dichiarata volatile nella classe del prodotto.
 In realtà funziona anche in modo non sincronizzato: P1 non
-sussisteva.
+sussisteva. Ovviamente se non sincronizzo le operazioni di 
+stampa e di scrittura del prodotto, non c'e' garanzia che 
+quanto stampato rispecchi lo stato corrente della matrice. 
