@@ -4,7 +4,7 @@ public class RowColumnProduct implements Runnable {
     private int product;
     private int a[][];
     private int b[][];
-    private int matrix[][];
+    private volatile int matrix[][];
     
     public RowColumnProduct(int a[][], int b[][], int nRow,
                         int nCol, int[][] matrix) {
@@ -23,13 +23,25 @@ public class RowColumnProduct implements Runnable {
         for (int i = 0; i < this.a.length; i++){
             sum = sum + this.a[nRow][i] * this.b[i][nCol];
         }
-        this.matrix[nRow][nCol] = sum;
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {}
+        synchronized(this.matrix){
+            this.matrix[nRow][nCol] = sum;
+            //System.out.println(Thread.currentThread().getName());
+            this.matrix.notify();
+        }
+        /*try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {}*/
+        //System.out.println(matrix);
+        System.out.println(Thread.currentThread().getName());
+        
            
     }
     
+    
+    public int[][] getMatrix() {
+        return matrix;
+    }
+
     public int getProduct() {
         return product;
     }

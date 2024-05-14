@@ -4,6 +4,12 @@ import java.util.regex.Pattern;
 
 public class Main{
     public static void main(String args[]) throws InterruptedException {
+        /*SynchronizedMatrix a = new SynchronizedMatrix(2, 2);
+        SynchronizedMatrix b = new SynchronizedMatrix(2, 2);
+        a.printMatrix();
+        b.printMatrix();
+        SynchronizedMatrix c = a.matrixProd(b.getMatrix());
+        c.printMatrix();*/
         int matrices[][][] = initMatricesFromArguments(args);
         int a[][] = matrices[0];
         int b[][] = matrices[1];
@@ -18,19 +24,20 @@ public class Main{
             
             threads[i] = new Thread(products[i]);
         }
-        
-        for (int k=0; k<threads.length; k++) {
-            threads[k].start();
-        }
         AtomicBoolean AreThreadsRunning = new AtomicBoolean(true);
         new Thread(()->{while(AreThreadsRunning.get())
                             {System.out.print("\nCurrent state: \n");
-                                printMatrix(c);}}).start();
+        synchronized(c){printMatrix(products[0].getMatrix());/*  try {products[0].getMatrix().wait();} catch(InterruptedException e){}*/}}}).start();
+        for (int k=0; k<threads.length; k++) {
+            threads[k].start();
+        }
+        
         for (int k=0; k<threads.length; k++) {
             threads[k].join();
         }
         AreThreadsRunning.set(false);
         printMatrix(c);
+        System.out.println("Fine mainThread.");
         //System.out.println();
         //printMatrix(matrixProd(a, b));
     }
