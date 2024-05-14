@@ -11,3 +11,36 @@ come se non fosse stata oggetto di nessuna modifica.
 Questo accade perche' non e' stata fissata nessuna happens-before
 relationships, ovvero non c'e' nessuna garanzia che le scritture
 di uno statement siano visibili da un altro statement.
+
+Ho risolto (si fa per dire) il problema mettendo in un blocco
+synchronized la scrittura del risultato del prodotto riga-colonna
+nella corrispondente entry della matrice; e mettendo
+in un blocco synchronized la lettura della matrice. Tuttavia
+poiche' non decido io l'ordine di esecuzione dei thread non e'
+detto che la stampa avvenga dopo la scrittura di un entry.
+Può capitare se sono sfortunato che ci sia una stampa della
+matrice nulla e nella successiva tutto il risultato.
+Puo' capitare addirittura di avere due stampe consecutive
+dello stesso stato della matrice.
+
+Ho provato a implementare delle stampe più granulari dello stato
+della matrice usando un wait nel blocco synchronized e un
+notify nel blocco synchronized del thread di stampa.
+Il risultato non è stato soddisfaccente perche' non e'
+detto che dopo il notify vada il thread che prima era in attesa.
+Il più delle volte è avvenuta una situazione di deadlock
+in cui i thread dei prodotti avevano finito e il thread della
+stampa è stato messo in esecuzione dopo gli altri e dunque è
+andato in uno stato di attesa indefinita.
+
+Wait è un metodo dell'oggetto. Deve essere invocato
+sull'oggetto di cui il thread possiede il lock e deve essere
+invocato quando si ha il lock dell'oggetto, quindi farà parte
+di un blocco (o metodo) synchronized.
+
+In realtà la stampa della matrice funziona anche se non è in
+un blocco synchronized.
+In realtà la stampa della matrice funziona anche se non è, la
+sua reference, dichiarata volatile nella classe del prodotto.
+In realtà funziona anche in modo non sincronizzato: P1 non
+sussisteva.
