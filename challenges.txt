@@ -55,3 +55,11 @@ In realtà funziona anche in modo non sincronizzato: P1 non
 sussisteva. Ovviamente se non sincronizzo le operazioni di 
 stampa e di scrittura del prodotto, non c'e' garanzia che 
 quanto stampato rispecchi lo stato corrente della matrice. 
+
+Successivamente ho sostituito, nell'inizializzazione della
+matrice con numeri casuali, Math.random con un oggetto della
+classe Random, ciò oltre a rendere il codice più leggibile,
+permette di generare uno stream di numeri casuali in modo
+più efficiente (del resto e' una classe appartenente al package
+util) e offre la possibilita' di gestire il tipo di numeri
+casuali desiderato più comodamente.

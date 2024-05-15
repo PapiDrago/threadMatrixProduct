@@ -1,5 +1,5 @@
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 public class Main{
@@ -25,9 +25,9 @@ public class Main{
             threads[i] = new Thread(products[i]);
         }
         AtomicBoolean AreThreadsRunning = new AtomicBoolean(true);
-        new Thread(()->{while(AreThreadsRunning.get())
-                            {System.out.print("\nCurrent state: \n");
-        /*synchronized(c){*/printMatrix(c);/*  try {products[0].getMatrix().wait();} catch(InterruptedException e){}*//*}*/}}).start();
+        new Thread(()->{while(AreThreadsRunning.get()) {}
+                            System.out.print("\nCurrent state: \n");
+        /*synchronized(c){*/printMatrix(c);/*  try {products[0].getMatrix().wait();} catch(InterruptedException e){}*//*}*/}).start();
         for (int k=0; k<threads.length; k++) {
             threads[k].start();
         }
@@ -39,14 +39,15 @@ public class Main{
         //printMatrix(c);
         System.out.println("Fine mainThread.");
         //System.out.println();
-        //printMatrix(matrixProd(a, b));
+        //printMatrix(singleThreadMatrixProd(a, b));
     }
 
     public static int[][] initMatrix(int rows, int columns) {
+        Random randomStream = new Random();
         int matrix[][] = new int[rows][columns];
         for (int i=0; i<rows; i++){
             for (int j=0; j<columns; j++){
-                matrix[i][j] = (int) (Math.random() * 10);
+                matrix[i][j] = randomStream.nextInt(100);
             }
         }
         return matrix;
