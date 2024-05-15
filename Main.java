@@ -27,7 +27,7 @@ public class Main{
         AtomicBoolean AreThreadsRunning = new AtomicBoolean(true);
         new Thread(()->{while(AreThreadsRunning.get())
                             {System.out.print("\nCurrent state: \n");
-        synchronized(c){printMatrix(products[0].getMatrix());/*  try {products[0].getMatrix().wait();} catch(InterruptedException e){}*/}}}).start();
+        /*synchronized(c){*/printMatrix(c);/*  try {products[0].getMatrix().wait();} catch(InterruptedException e){}*//*}*/}}).start();
         for (int k=0; k<threads.length; k++) {
             threads[k].start();
         }
@@ -36,7 +36,7 @@ public class Main{
             threads[k].join();
         }
         AreThreadsRunning.set(false);
-        printMatrix(c);
+        //printMatrix(c);
         System.out.println("Fine mainThread.");
         //System.out.println();
         //printMatrix(matrixProd(a, b));
@@ -73,7 +73,7 @@ public class Main{
     }
 
 
-    public static int[][] matrixProd(int[][] a, int[][] b){
+    public static int[][] singleThreadMatrixProd(int[][] a, int[][] b){
         if(a[0].length != b.length) {
             throw new IllegalArgumentException("Il numero di colonne di A "+
                                     "non e' uguale al numero di righe di B!");
