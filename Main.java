@@ -1,6 +1,6 @@
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Pattern;
+//import java.util.regex.Pattern;
 
 public class Main{
     public static void main(String args[]) throws InterruptedException {
@@ -54,21 +54,29 @@ public class Main{
     }
 
     public static void printMatrix(int[][] matrix){
-        System.out.print("\n");
-        for (int i = 0; i<matrix.length; i++){
-            for (int j = 0; j<matrix[0].length; j++){ //itero sulla riga i-esima
-                System.out.print(matrix[i][j] + " ");
+        if (matrix == null) {
+            System.out.println("La matrice non è stata definita.");
+        } else {
+            System.out.print("\n");
+            for (int i = 0; i<matrix.length; i++){
+                for (int j = 0; j<matrix[0].length; j++){ //itero sulla riga i-esima
+                    System.out.print(matrix[i][j] + " ");
+                }
+                System.out.println();
             }
-            System.out.println();
         }
     }
     public static void initThreadProducts(RowColumnProduct[] products,
                                         int[][] a, int b[][], int c[][]){
-        int i = 0;
-        for (int rowA = 0; rowA<a.length; rowA++) {
-            for (int colB = 0; colB<b[0].length; colB++){
-                products[i] = new RowColumnProduct(a, b, rowA, colB, c);
-                i++;
+        if (a == null || b == null){
+            System.out.println("Impossibile eseguire il prodotto perche' almeno una delle matrici non è stata definita.");
+        } else {
+            int i = 0;
+            for (int rowA = 0; rowA<a.length; rowA++) {
+                for (int colB = 0; colB<b[0].length; colB++){
+                    products[i] = new RowColumnProduct(a, b, rowA, colB, c);
+                    i++;
+                }
             }
         }
     }
@@ -93,7 +101,6 @@ public class Main{
     }
 
     public static int[][][] initMatricesFromArguments(String[] args){
-        
         if(args.length == 0) {
             System.out.println("Inizialiazzazione di due matrici 2x2.");
             int matrices[][][] = new int[2][][];
@@ -103,8 +110,32 @@ public class Main{
         }
         int matrices[][][] = new int[args.length][][];
         for (int i = 0; i<args.length; i++){
-            System.out.println(args[i]);
-            if(Pattern.matches("[0-9]+,[0-9]+", args[i])){
+            try {
+                String[] dimensions = args[i].split(",");
+                if (dimensions.length != 2) {
+                    throw new IllegalArgumentException("formato "+
+                    "dell'input invalido, richiesto '[righe],[colonne]'.");
+                }
+                int rows = Integer.parseInt(dimensions[0]);
+                int cols = Integer.parseInt(dimensions[1]);
+                if (rows <= 0 || cols <= 0) {
+                    throw new IllegalArgumentException("dimensioni "
+                    +"della matrice non corrette, devono essere strettamente positive.");
+                }
+                matrices[i] = initMatrix(rows, cols);
+            } catch (NumberFormatException e) {
+                System.err.println("Errore nel parsing di '"+args[i]+"'."+
+                " La stringa contiene un valore che non rappresenta un numero intero. "+ e.getMessage());
+                matrices[i] = null;
+                //System.exit(1);
+            } catch (IllegalArgumentException e ) {
+                System.err.println("Errore nella gestione di '"+args[i]+"':"+
+                " "+ e.getMessage());
+                matrices[i] = null;
+                //System.exit(1);
+            }
+            
+            /*if(Pattern.matches("[0-9]+,[0-9]+", args[i])){
                 int rows = Integer.parseInt(args[i].split(",")[0]);
                 int cols = Integer.parseInt(args[i].split(",")[1]);
                 int matrix[][] = initMatrix(rows, cols);
@@ -113,8 +144,14 @@ public class Main{
             } else {
                 throw new IllegalArgumentException("Gli argomenti facoltativi "
                 +"devono avere la seguente espressione [numero righe],[numero colonne]");
-            }
+            }*/
+            /*if (matrices[i] == null){
+                System.exit(1);
+            }*/
         }
         return matrices;
+    }
+    public static boolean IsMatrixNull(int[][] matrix){
+        return matrix == null;
     }
 }
