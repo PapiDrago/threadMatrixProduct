@@ -105,7 +105,7 @@ public class Main{
     public static int[][][] product(int[][][] matrices) throws InterruptedException {
         int numProducts = (int) matrices.length / 2;
         int matrixResults[][][] = new int[numProducts][][];
-        for(int i=0; i<matrices.length; i +=2){
+        for(int i=0; i+1<matrices.length; i +=2){
             int[][] a = matrices[i];
             int[][] b = matrices[i+1];
             printMatrix(a);
