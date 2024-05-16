@@ -11,7 +11,9 @@ public class Main{
         SynchronizedMatrix c = a.matrixProd(b.getMatrix());
         c.printMatrix();*/
         int matrices[][][] = initMatricesFromArguments(args);
-        int a[][] = matrices[0];
+        int productResults[][][] = product(matrices);
+        printMatrixArray(productResults);
+        /*int a[][] = matrices[0];
         int b[][] = matrices[1];
         printMatrix(a);
         printMatrix(b);
@@ -27,17 +29,17 @@ public class Main{
         AtomicBoolean AreThreadsRunning = new AtomicBoolean(true);
         new Thread(()->{while(AreThreadsRunning.get()) {}
                             System.out.print("\nCurrent state: \n");
-        /*synchronized(c){*/printMatrix(c);/*  try {products[0].getMatrix().wait();} catch(InterruptedException e){}*//*}*/}).start();
-        for (int k=0; k<threads.length; k++) {
+        /*synchronized(c){*///printMatrix(c);/*  try {products[0].getMatrix().wait();} catch(InterruptedException e){}*//*}*/}).start();
+        /*for (int k=0; k<threads.length; k++) {
             threads[k].start();
         }
         
         for (int k=0; k<threads.length; k++) {
             threads[k].join();
         }
-        AreThreadsRunning.set(false);
+        AreThreadsRunning.set(false);*/
         //printMatrix(c);
-        System.out.println("Fine mainThread.");
+        //System.out.println("Fine mainThread.");
         //System.out.println();
         //printMatrix(singleThreadMatrixProd(a, b));
     }
@@ -47,7 +49,7 @@ public class Main{
         int matrix[][] = new int[rows][columns];
         for (int i=0; i<rows; i++){
             for (int j=0; j<columns; j++){
-                matrix[i][j] = randomStream.nextInt(100);
+                matrix[i][j] = randomStream.nextInt(10);
             }
         }
         return matrix;
@@ -98,6 +100,39 @@ public class Main{
             }
         }
         return c;
+    }
+
+    public static int[][][] product(int[][][] matrices) throws InterruptedException {
+        int numProducts = (int) matrices.length / 2;
+        int matrixResults[][][] = new int[numProducts][][];
+        for(int i=0; i<matrices.length; i +=2){
+            int[][] a = matrices[i];
+            int[][] b = matrices[i+1];
+            printMatrix(a);
+            printMatrix(b);
+            if(!RowColumnProduct.isWellDefined(a, b)){
+                matrixResults[i/2] = null;
+                continue;
+            }
+            matrixResults[i/2] = new int[a.length][b[0].length];
+            int[][] c = matrixResults[i/2];
+            System.out.println(getEntryCount(c));
+            Thread[] threads = new Thread[getEntryCount(c)];
+            RowColumnProduct products[] = new RowColumnProduct[getEntryCount(c)];
+            initThreadProducts(products, a, b, c);
+            for(int k = 0; k<threads.length; k++){
+                threads[k] = new Thread(products[k]);
+            }
+            for (int k=0; k<threads.length; k++) {
+                threads[k].start();
+            }
+            for (int k=0; k<threads.length; k++) {
+                threads[k].join();
+            }
+            System.out.println(i);
+
+        }
+        return matrixResults;
     }
 
     public static int[][][] initMatricesFromArguments(String[] args){
@@ -153,5 +188,15 @@ public class Main{
     }
     public static boolean IsMatrixNull(int[][] matrix){
         return matrix == null;
+    }
+
+    public static int getEntryCount(int[][] matrix) {
+        return matrix.length*matrix[0].length;
+    }
+
+    public static void printMatrixArray(int[][][] matrixArray) {
+        for (int[][] matrix : matrixArray) {
+            printMatrix(matrix);
+        }
     }
 }

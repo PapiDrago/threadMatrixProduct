@@ -81,3 +81,17 @@ scandiscono tutti gli eventuali blocchi catch alla ricerca
 di uno che gestisca quella eccezione. Cio' significa che
 l'esecuzione riparte dal blocco catch e al termine si passa
 all'iterazione successiva del for.
+
+Implementare thread pools? Altre operazioni da fare? thread pool utile se servono thread per prodotto successivo.
+Fare metodo che restituisce numero entrate matrice.
+
+Fa il prodotto lo stesso nonostante non sia possibile
+Controllare caso di matrici dispari
+
+P2:viene fatto il prodotto anche quando le colonne
+di A sono maggiori delle righe di B. Il prodotto matriciale
+e' ben definito se tali dimensioni sono uguali.
+In questo caso vengono trascurate, nel prodotto, le entrate sulle
+colonne di A di indice superiore a quello dell'ultima riga di B.
+In sostanza e' come si facesse il prodotto tra A monca e B.
+Ho risolto cio' aggiungendo un controllo.
