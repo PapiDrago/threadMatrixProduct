@@ -2,15 +2,15 @@ public class RowColumnProduct implements Runnable {
     private int nRow;
     private int nCol;
     private int product;
-    private int a[][];
-    private int b[][];
+    private int firstMatrix[][];
+    private int secondMatrix[][];
     private /*volatile*/ int matrix[][];
     
-    public RowColumnProduct(int a[][], int b[][], int nRow,
+    public RowColumnProduct(int firstMatrix[][], int secondMatrix[][], int nRow,
                         int nCol, int[][] matrix) {
         super();
-        this.a = a;
-        this.b = b;
+        this.firstMatrix = firstMatrix;
+        this.secondMatrix = secondMatrix;
         this.nRow = nRow;
         this.nCol = nCol;
         this.matrix = matrix;
@@ -20,8 +20,8 @@ public class RowColumnProduct implements Runnable {
     @Override
     public void run() {
         int sum = 0;
-        for (int i = 0; i < this.a[0].length; i++){
-            sum = sum + this.a[nRow][i] * this.b[i][nCol];
+        for (int i = 0; i < this.firstMatrix[0].length; i++){
+            sum = sum + this.firstMatrix[nRow][i] * this.secondMatrix[i][nCol];
         }
         synchronized(this.matrix){
             this.matrix[nRow][nCol] = sum;
@@ -46,8 +46,8 @@ public class RowColumnProduct implements Runnable {
         return product;
     }
     
-    public static boolean isWellDefined(int[][] a, int[][] b) {
-        if(a[0].length != b.length){
+    public static boolean isWellDefined(int[][] firstMatrix, int[][] secondMatrix) {
+        if(firstMatrix[0].length != secondMatrix.length){
             System.out.println("Il prodotto tra le due matrici precedentemente stampate non e' ben definito.");
             return false;
         }

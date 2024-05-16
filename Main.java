@@ -1,27 +1,26 @@
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicBoolean;
 //import java.util.regex.Pattern;
 
 public class Main{
     public static void main(String args[]) throws InterruptedException {
-        /*SynchronizedMatrix a = new SynchronizedMatrix(2, 2);
-        SynchronizedMatrix b = new SynchronizedMatrix(2, 2);
-        a.printMatrix();
-        b.printMatrix();
-        SynchronizedMatrix c = a.matrixProd(b.getMatrix());
+        /*SynchronizedMatrix firstMatrix = new SynchronizedMatrix(2, 2);
+        SynchronizedMatrix secondMatrix = new SynchronizedMatrix(2, 2);
+        firstMatrix.printMatrix();
+        secondMatrix.printMatrix();
+        SynchronizedMatrix c = firstMatrix.matrixProd(secondMatrix.getMatrix());
         c.printMatrix();*/
         int matrices[][][] = initMatricesFromArguments(args);
         int productResults[][][] = product(matrices);
         printMatrixArray(productResults);
-        /*int a[][] = matrices[0];
-        int b[][] = matrices[1];
-        printMatrix(a);
-        printMatrix(b);
-        int c[][] = new int[a.length][b[0].length];//
-        int nCEntries = a.length*b[0].length;
+        /*int firstMatrix[][] = matrices[0];
+        int secondMatrix[][] = matrices[1];
+        printMatrix(firstMatrix);
+        printMatrix(secondMatrix);
+        int c[][] = new int[firstMatrix.length][secondMatrix[0].length];//
+        int nCEntries = firstMatrix.length*secondMatrix[0].length;
         Thread[] threads = new Thread[nCEntries];
         RowColumnProduct products[] = new RowColumnProduct[nCEntries];
-        initThreadProducts(products, a, b, c);
+        initThreadProducts(products, firstMatrix, secondMatrix, c);
         for(int i = 0; i<threads.length; i++){
             
             threads[i] = new Thread(products[i]);
@@ -41,7 +40,7 @@ public class Main{
         //printMatrix(c);
         //System.out.println("Fine mainThread.");
         //System.out.println();
-        //printMatrix(singleThreadMatrixProd(a, b));
+        //printMatrix(singleThreadMatrixProd(firstMatrix, secondMatrix));
     }
 
     public static int[][] initMatrix(int rows, int columns) {
@@ -69,14 +68,14 @@ public class Main{
         }
     }
     public static void initThreadProducts(RowColumnProduct[] products,
-                                        int[][] a, int b[][], int c[][]){
-        if (a == null || b == null){
+                                        int[][] firstMatrix, int secondMatrix[][], int c[][]){
+        if (firstMatrix == null || secondMatrix == null){
             System.out.println("Impossibile eseguire il prodotto perche' almeno una delle matrici non è stata definita.");
         } else {
             int i = 0;
-            for (int rowA = 0; rowA<a.length; rowA++) {
-                for (int colB = 0; colB<b[0].length; colB++){
-                    products[i] = new RowColumnProduct(a, b, rowA, colB, c);
+            for (int firstMatrixRow = 0; firstMatrixRow<firstMatrix.length; firstMatrixRow++) {
+                for (int secondMatrixCol = 0; secondMatrixCol<secondMatrix[0].length; secondMatrixCol++){
+                    products[i] = new RowColumnProduct(firstMatrix, secondMatrix, firstMatrixRow, secondMatrixCol, c);
                     i++;
                 }
             }
@@ -84,19 +83,19 @@ public class Main{
     }
 
 
-    public static int[][] singleThreadMatrixProd(int[][] a, int[][] b){
-        if(a[0].length != b.length) {
+    public static int[][] singleThreadMatrixProd(int[][] firstMatrix, int[][] secondMatrix){
+        if(firstMatrix[0].length != secondMatrix.length) {
             throw new IllegalArgumentException("Il numero di colonne di A "+
                                     "non e' uguale al numero di righe di B!");
         } 
-        int c[][] = new int[a.length][b[0].length];
-        for(int rowA = 0; rowA<a.length; rowA++){
-            for(int colB = 0; colB<b[0].length; colB++){
+        int c[][] = new int[firstMatrix.length][secondMatrix[0].length];
+        for(int firstMatrixRow = 0; firstMatrixRow<firstMatrix.length; firstMatrixRow++){
+            for(int secondMatrixCol = 0; secondMatrixCol<secondMatrix[0].length; secondMatrixCol++){
                 int sum = 0;
-                for (int colA = 0; colA < a[0].length; colA++){
-                    sum = sum + a[rowA][colA] * b[colA][colB];
+                for (int firstMatrixCol = 0; firstMatrixCol < firstMatrix[0].length; firstMatrixCol++){
+                    sum = sum + firstMatrix[firstMatrixRow][firstMatrixCol] * secondMatrix[firstMatrixCol][secondMatrixCol];
                 }
-                c[rowA][colB] = sum;
+                c[firstMatrixRow][secondMatrixCol] = sum;
             }
         }
         return c;
@@ -106,20 +105,20 @@ public class Main{
         int numProducts = (int) matrices.length / 2;
         int matrixResults[][][] = new int[numProducts][][];
         for(int i=0; i+1<matrices.length; i +=2){
-            int[][] a = matrices[i];
-            int[][] b = matrices[i+1];
-            printMatrix(a);
-            printMatrix(b);
-            if(!RowColumnProduct.isWellDefined(a, b)){
+            int[][] firstMatrix = matrices[i];
+            int[][] secondMatrix = matrices[i+1];
+            printMatrix(firstMatrix);
+            printMatrix(secondMatrix);
+            if(!RowColumnProduct.isWellDefined(firstMatrix, secondMatrix)){
                 matrixResults[i/2] = null;
                 continue;
             }
-            matrixResults[i/2] = new int[a.length][b[0].length];
+            matrixResults[i/2] = new int[firstMatrix.length][secondMatrix[0].length];
             int[][] c = matrixResults[i/2];
             System.out.println(getEntryCount(c));
             Thread[] threads = new Thread[getEntryCount(c)];
             RowColumnProduct products[] = new RowColumnProduct[getEntryCount(c)];
-            initThreadProducts(products, a, b, c);
+            initThreadProducts(products, firstMatrix, secondMatrix, c);
             for(int k = 0; k<threads.length; k++){
                 threads[k] = new Thread(products[k]);
             }
