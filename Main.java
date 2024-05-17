@@ -145,14 +145,10 @@ public class Main{
         int matrices[][][] = new int[args.length][][];
         for (int i = 0; i<args.length; i++){
             try {
-                String[] dimensions = args[i].split(",");
-                if (dimensions.length != 2) {
-                    throw new IllegalArgumentException("formato "+
-                    "dell'input invalido, richiesto '[righe],[colonne]'.");
-                }
+                String[] dimensions = getDimensionsFromArg(args[i]);
                 int rows = Integer.parseInt(dimensions[0]);
                 int cols = Integer.parseInt(dimensions[1]);
-                if (rows <= 0 || cols <= 0) {
+                if (!AreDimensionsMeaningful(rows, cols)) {
                     throw new IllegalArgumentException("dimensioni "
                     +"della matrice non corrette, devono essere strettamente positive.");
                 }
@@ -197,5 +193,20 @@ public class Main{
         for (int[][] matrix : matrixArray) {
             printMatrix(matrix);
         }
+    }
+
+    public static String[] getDimensionsFromArg(String arg) throws IllegalArgumentException {
+        String[] dimensions = arg.split(",");
+        if (dimensions.length != 2) {
+                throw new IllegalArgumentException("formato "+
+                "dell'input invalido, richiesto '[righe],[colonne]'.");
+            }
+        return dimensions;
+    }
+    public static boolean AreDimensionsMeaningful(int rows, int cols) {
+        if (rows <= 0 || cols <= 0) {
+            return false;
+        }
+        return true;
     }
 }
