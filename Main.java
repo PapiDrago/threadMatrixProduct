@@ -10,7 +10,9 @@ public class Main{
         SynchronizedMatrix c = firstMatrix.matrixProd(secondMatrix.getMatrix());
         c.printMatrix();*/
         int matrices[][][] = initMatricesFromArguments(args);
+        printMatrixArray(matrices);
         int productResults[][][] = product(matrices);
+        System.out.println("Elenco matrici prodotto:");
         printMatrixArray(productResults);
         /*int firstMatrix[][] = matrices[0];
         int secondMatrix[][] = matrices[1];
@@ -55,10 +57,10 @@ public class Main{
     }
 
     public static void printMatrix(int[][] matrix){
-        if (matrix == null) {
+        if (isMatrixNull(matrix)) {
             System.out.println("La matrice non è stata definita.");
         } else {
-            System.out.print("\n");
+            //System.out.print("\n");
             for (int i = 0; i<matrix.length; i++){
                 for (int j = 0; j<matrix[0].length; j++){ //itero sulla riga i-esima
                     System.out.print(matrix[i][j] + " ");
@@ -66,10 +68,11 @@ public class Main{
                 System.out.println();
             }
         }
+        System.out.println();
     }
-    public static void initThreadProducts(RowColumnProduct[] products,
+    public static void initProducts(RowColumnProduct[] products,
                                         int[][] firstMatrix, int secondMatrix[][], int c[][]){
-        if (firstMatrix == null || secondMatrix == null){
+        if (isMatrixNull(firstMatrix) || isMatrixNull(secondMatrix)){
             System.out.println("Impossibile eseguire il prodotto perche' almeno una delle matrici non è stata definita.");
         } else {
             int i = 0;
@@ -84,20 +87,22 @@ public class Main{
 
 
     public static int[][] singleThreadMatrixProd(int[][] firstMatrix, int[][] secondMatrix){
-        if(firstMatrix[0].length != secondMatrix.length) {
-            throw new IllegalArgumentException("Il numero di colonne di A "+
-                                    "non e' uguale al numero di righe di B!");
-        } 
         int c[][] = new int[firstMatrix.length][secondMatrix[0].length];
-        for(int firstMatrixRow = 0; firstMatrixRow<firstMatrix.length; firstMatrixRow++){
+        RowColumnProduct products[] = new RowColumnProduct[getEntryCount(c)];
+        initProducts(products, firstMatrix, secondMatrix, c);
+        for (RowColumnProduct product : products) {
+            product.executeRowColumnProduct();
+        }
+        /*for(int firstMatrixRow = 0; firstMatrixRow<firstMatrix.length; firstMatrixRow++){
             for(int secondMatrixCol = 0; secondMatrixCol<secondMatrix[0].length; secondMatrixCol++){
                 int sum = 0;
-                for (int firstMatrixCol = 0; firstMatrixCol < firstMatrix[0].length; firstMatrixCol++){
+                //product.execute();
+                /*for (int firstMatrixCol = 0; firstMatrixCol < firstMatrix[0].length; firstMatrixCol++){
                     sum = sum + firstMatrix[firstMatrixRow][firstMatrixCol] * secondMatrix[firstMatrixCol][secondMatrixCol];
                 }
-                c[firstMatrixRow][secondMatrixCol] = sum;
-            }
-        }
+                c[firstMatrixRow][secondMatrixCol] = sum;*/
+            //}
+        //}
         return c;
     }
 
@@ -107,18 +112,18 @@ public class Main{
         for(int i=0; i+1<matrices.length; i +=2){
             int[][] firstMatrix = matrices[i];
             int[][] secondMatrix = matrices[i+1];
-            printMatrix(firstMatrix);
-            printMatrix(secondMatrix);
-            if(!RowColumnProduct.isWellDefined(firstMatrix, secondMatrix)){
+            //printMatrix(firstMatrix);
+            //printMatrix(secondMatrix);
+            if(isMatrixNull(firstMatrix) || isMatrixNull(secondMatrix) || !RowColumnProduct.isWellDefined(firstMatrix, secondMatrix)){
                 matrixResults[i/2] = null;
                 continue;
             }
             matrixResults[i/2] = new int[firstMatrix.length][secondMatrix[0].length];
-            int[][] c = matrixResults[i/2];
-            System.out.println(getEntryCount(c));
-            Thread[] threads = new Thread[getEntryCount(c)];
+            //int[][] c = matrixResults[i/2];
+            matrixResults[i/2] = singleThreadMatrixProd(firstMatrix, secondMatrix);
+            /*Thread[] threads = new Thread[getEntryCount(c)];
             RowColumnProduct products[] = new RowColumnProduct[getEntryCount(c)];
-            initThreadProducts(products, firstMatrix, secondMatrix, c);
+            initProducts(products, firstMatrix, secondMatrix, c);
             for(int k = 0; k<threads.length; k++){
                 threads[k] = new Thread(products[k]);
             }
@@ -128,7 +133,7 @@ public class Main{
             for (int k=0; k<threads.length; k++) {
                 threads[k].join();
             }
-            System.out.println(i);
+            System.out.println(i);*/
 
         }
         return matrixResults;
@@ -181,7 +186,7 @@ public class Main{
         }
         return matrices;
     }
-    public static boolean IsMatrixNull(int[][] matrix){
+    public static boolean isMatrixNull(int[][] matrix){
         return matrix == null;
     }
 
@@ -190,8 +195,10 @@ public class Main{
     }
 
     public static void printMatrixArray(int[][][] matrixArray) {
-        for (int[][] matrix : matrixArray) {
-            printMatrix(matrix);
+
+        for (int i = 0; i<matrixArray.length; i++) {
+            System.out.println("Matrice n"+i);
+            printMatrix(matrixArray[i]);
         }
     }
 

@@ -19,15 +19,7 @@ public class RowColumnProduct implements Runnable {
    
     @Override
     public void run() {
-        int sum = 0;
-        for (int i = 0; i < this.firstMatrix[0].length; i++){
-            sum = sum + this.firstMatrix[nRow][i] * this.secondMatrix[i][nCol];
-        }
-        synchronized(this.matrix){
-            this.matrix[nRow][nCol] = sum;
-            //System.out.println(Thread.currentThread().getName());
-            //this.matrix.notify();
-        }
+        executeRowColumnProduct();
         /*try {
             Thread.sleep(10000);
         } catch (InterruptedException e) {}*/
@@ -52,6 +44,17 @@ public class RowColumnProduct implements Runnable {
             return false;
         }
         return true;
+    }
+    public void executeRowColumnProduct() {
+        int sum = 0;
+        for (int i = 0; i < this.firstMatrix[0].length; i++){
+            sum = sum + this.firstMatrix[nRow][i] * this.secondMatrix[i][nCol];
+        }
+        synchronized(this.matrix){
+            this.matrix[nRow][nCol] = sum;
+            //System.out.println(Thread.currentThread().getName());
+            //this.matrix.notify();
+        }
     }
     
 }
