@@ -1,9 +1,11 @@
 import java.util.Random;
 //import java.util.regex.Pattern;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main{
     private static AtomicBoolean areThreadsRunning = new AtomicBoolean(false);
+    private static AtomicBoolean areCoreThreadsRunning = new AtomicBoolean(false);
     private static long singleThreadStartTime;
     private static long singleThreadEstimatedTime;
     private static long multiThreadStartTime;
@@ -12,6 +14,12 @@ public class Main{
     private static long insideMultiThreadEstimatedTime;
     private static long initMultiThreadStartTime;
     private static long initMultiThreadEstimatedTime;
+    private static long coreThreadStartTime;
+    private static long coreThreadEstimatedTime;
+    private static long initCoreThreadStartTime;
+    private static long initCoreThreadEstimatedTime;
+    private static long insideCoreThreadStartTime;
+    private static long insideCoreThreadEstimatedTime;
     public static void main(String args[]) throws InterruptedException {
         /*SynchronizedMatrix firstMatrix = new SynchronizedMatrix(2, 2);
         SynchronizedMatrix secondMatrix = new SynchronizedMatrix(2, 2);
@@ -23,11 +31,18 @@ public class Main{
         printMatrixArray(matrices);
         int productResults[][][] = product(matrices);
         System.out.println("Elenco matrici prodotto:");
-        printMatrixArray(productResults);
-        while (areThreadsRunning.get()) {}
+        //printMatrixArray(productResults);
+        while (areThreadsRunning.get() || areCoreThreadsRunning.get()) {}
         System.out.println("Elenco matrici prodotto thread:");
         printMatrixArray(productResults);
-        
+        System.out.println("Durata del prodotto -esimo "+"con un thread singolo [ns]: "+singleThreadEstimatedTime);
+        System.out.println("Durata del prodotto -esimo "+"con multipli thread [ns]: "+multiThreadEstimatedTime);
+        System.out.println("Durata del prodotto -esimo "+"con multipli thread senza contare inizializzazione [ns]: "+insideMultiThreadEstimatedTime);
+        System.out.println("Durata dell'inizializzazione dei thread per il prodotto -esimo [ns]: "+initMultiThreadEstimatedTime);
+        System.out.println("Durata del prodotto -esimo "+"con 4 thread [ns]: "+coreThreadEstimatedTime);
+        System.out.println("Durata del prodotto -esimo "+"con 4 thread senza contare inizializzazione [ns]: "+insideCoreThreadEstimatedTime);
+        System.out.println("Durata dell'inizializzazione dei 4 thread per il prodotto -esimo [ns]: "+initCoreThreadEstimatedTime);
+
         /*int firstMatrix[][] = matrices[0];
         int secondMatrix[][] = matrices[1];
         printMatrix(firstMatrix);
@@ -136,9 +151,12 @@ public class Main{
             singleThreadMatrixProd(firstMatrix, secondMatrix, matrixResults[i/2], products);
             singleThreadEstimatedTime = System.nanoTime() - singleThreadStartTime;
             multiThreadStartTime = System.nanoTime();
-            multThreadMatrixProduct(firstMatrix, secondMatrix, matrixResults[i/2], products);
+            multiThreadMatrixProduct(firstMatrix, secondMatrix, matrixResults[i/2], products);
             multiThreadEstimatedTime = System.nanoTime() - multiThreadStartTime;
-            System.out.println("Durata del prodotto "+i/2+"-esimo "+"con un thread singolo [ns]: "+singleThreadEstimatedTime);
+            coreThreadStartTime = System.nanoTime();
+            coreThreadMatrixProduct(firstMatrix, secondMatrix, matrixResults[i/2], products);
+            coreThreadEstimatedTime = System.nanoTime() - coreThreadStartTime;
+            /*System.out.println("Durata del prodotto "+i/2+"-esimo "+"con un thread singolo [ns]: "+singleThreadEstimatedTime);
             System.out.println("Durata del prodotto "+i/2+"-esimo "+"con multipli thread [ns]: "+multiThreadEstimatedTime);
             System.out.println("Durata del prodotto "+i/2+"-esimo "+"con multipli thread senza contare inizializzazione [ns]: "+insideMultiThreadEstimatedTime);
             System.out.println("Durata dell'inizializzazione dei thread per il prodotto "+i/2+"-esimo [ns]: "+initMultiThreadEstimatedTime);
@@ -238,7 +256,7 @@ public class Main{
         }
         return true;
     }
-    public static void multThreadMatrixProduct(int[][] firstMatrix,
+    public static void multiThreadMatrixProduct(int[][] firstMatrix,
                                 int[][] secondMatrix, int[][] c, RowColumnProduct[] products) throws InterruptedException {
         initMultiThreadStartTime = System.nanoTime();
         Thread[] threads = new Thread[getEntryCount(c)];
@@ -256,5 +274,62 @@ public class Main{
         }
         insideMultiThreadEstimatedTime = System.nanoTime() - insideMultiThreadStartTime;
         areThreadsRunning.set(false);
+    }
+    public static void coreThreadMatrixProduct(int[][] firstMatrix,
+                                int[][] secondMatrix, int[][] c, RowColumnProduct[] products) throws InterruptedException {
+        int coreCount = Runtime.getRuntime().availableProcessors();
+        int groups = getEntryCount(c)/(coreCount-1);
+        System.out.println("groups ="+groups+" getEntryCount(c)="+getEntryCount(c)+" core="+(coreCount-1));
+        Runnable runnable = new Runnable() {
+            private static AtomicInteger group = new AtomicInteger(0);
+            ThreadLocal<Integer> localGroup = new ThreadLocal<>() {
+                    @Override protected Integer initialValue() {
+                        return group.incrementAndGet();    
+                }
+            };
+            @Override
+            public void run() {
+                int bound = localGroup.get();
+                System.out.println("Gruppo locale: "+bound);
+                for(int i = 0+groups*(bound-1); i<groups*bound+(getEntryCount(c) % bound); i++) {
+                    products[i].executeRowColumnProduct();
+                }
+
+
+
+                /*for (int rowA = 0; rowA < firstMatrix.length; rowA++){
+                    for (int colB = 0; colB < secondMatrix[0].length; colB++) {
+                        synchronized(c){
+                            if(c[rowA][colB] == 0){
+                                continue;
+                            } else {
+                                int sum = 0;
+                                for (int colA = 0; colA < firstMatrix[0].length; colA++){
+                                    sum = sum + firstMatrix[rowA][colA] * secondMatrix[colA][colB];
+                                }
+                                c[rowA][colB] = sum; 
+                            }
+                        }
+                    }
+                }*/
+
+            }
+        };
+        initCoreThreadStartTime = System.nanoTime();
+        Thread[] threads = new Thread[coreCount-1];
+        for(int k = 0; k<threads.length; k++){
+            threads[k] = new Thread(runnable);
+        }
+        initCoreThreadEstimatedTime = System.nanoTime() - initCoreThreadStartTime;
+        insideCoreThreadStartTime = System.nanoTime();
+        for (int k=0; k<threads.length; k++) {
+            threads[k].start();
+        }
+        areCoreThreadsRunning.set(true);
+        for (int k=0; k<threads.length; k++) {
+            threads[k].join();
+        }
+        insideCoreThreadEstimatedTime = System.nanoTime() - insideCoreThreadStartTime;
+        areCoreThreadsRunning.set(false);
     }
 }

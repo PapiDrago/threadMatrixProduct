@@ -82,11 +82,6 @@ di uno che gestisca quella eccezione. Cio' significa che
 l'esecuzione riparte dal blocco catch e al termine si passa
 all'iterazione successiva del for.
 
-Implementare thread pools? Altre operazioni da fare? thread pool utile se servono thread per prodotto successivo.
-Fare metodo che restituisce numero entrate matrice.
-
-Fa il prodotto lo stesso nonostante non sia possibile
-Controllare caso di matrici dispari
 
 P2:viene fatto il prodotto anche quando le colonne
 di A sono maggiori delle righe di B. Il prodotto matriciale
@@ -95,3 +90,28 @@ In questo caso vengono trascurate, nel prodotto, le entrate sulle
 colonne di A di indice superiore a quello dell'ultima riga di B.
 In sostanza e' come si facesse il prodotto tra A monca e B.
 Ho risolto cio' aggiungendo un controllo.
+
+Dopo aver usato delle variabili per misurare il tempo di esecuzione
+del prodotto con un thread (il main) e con diversi thread,
+sono stato sorpreso dal fatto che ci metto di meno con un
+thread. Questo non dovrebbe in realta' stupirmi perche'
+per ogni entrata della matrice prodotto viene creato
+un thread. La gestione di troppi thread crea overhead
+considerando l'inizializzazione e i frequenti context switch.
+Allora ho provato a limitare il numero di thread al numero
+di core disponibili sulla macchina. Inizialmente l'ho fatto
+in maniera molto poco efficiente perche' ciascun thread
+eseguiva potenzialmente tutti i prodotti. Successivamente
+ho distribuito i prodotti nel modo più equo possibile
+e la situazione e' migliorata. Questo mi permette
+di far terminare prima l'esecuzione dei thread.
+Inoltre ho rimosso l'accesso sincronizzato alla matrice
+prodotto perche' creava ulteriore overhead.
+Chiaramente la soluzione con i thread scala meglio per
+matrici grandi.
+
+-da implementare thread pool
+
+
+-perché con i thread ci mette di più? Usare Thread local variabile
+-aggiungere docs.

@@ -50,11 +50,11 @@ public class RowColumnProduct implements Runnable {
         for (int i = 0; i < this.firstMatrix[0].length; i++){
             sum = sum + this.firstMatrix[nRow][i] * this.secondMatrix[i][nCol];
         }
-        synchronized(this.matrix){
+        //synchronized(this.matrix){
             this.matrix[nRow][nCol] = sum;
             //System.out.println(Thread.currentThread().getName());
             //this.matrix.notify();
-        }
+       // }
     }
     
 }
