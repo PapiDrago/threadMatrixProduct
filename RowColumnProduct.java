@@ -56,5 +56,12 @@ public class RowColumnProduct implements Runnable {
             //this.matrix.notify();
        // }
     }
+
+    @Override
+    public String toString() {
+        String string = "riga di A: " + this.nRow + " colonna di B: " + this.nCol;
+        return string;
+    }
+    
     
 }

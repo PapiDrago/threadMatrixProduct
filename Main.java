@@ -148,10 +148,10 @@ public class Main{
             RowColumnProduct products[] = new RowColumnProduct[getEntryCount(matrixResults[i/2])];
             initProducts(products, firstMatrix, secondMatrix, matrixResults[i/2]);
             singleThreadStartTime = System.nanoTime();
-            singleThreadMatrixProd(firstMatrix, secondMatrix, matrixResults[i/2], products);
+            //singleThreadMatrixProd(firstMatrix, secondMatrix, matrixResults[i/2], products);
             singleThreadEstimatedTime = System.nanoTime() - singleThreadStartTime;
             multiThreadStartTime = System.nanoTime();
-            multiThreadMatrixProduct(firstMatrix, secondMatrix, matrixResults[i/2], products);
+            //multiThreadMatrixProduct(firstMatrix, secondMatrix, matrixResults[i/2], products);
             multiThreadEstimatedTime = System.nanoTime() - multiThreadStartTime;
             coreThreadStartTime = System.nanoTime();
             coreThreadMatrixProduct(firstMatrix, secondMatrix, matrixResults[i/2], products);
@@ -278,10 +278,14 @@ public class Main{
     public static void coreThreadMatrixProduct(int[][] firstMatrix,
                                 int[][] secondMatrix, int[][] c, RowColumnProduct[] products) throws InterruptedException {
         int coreCount = Runtime.getRuntime().availableProcessors();
-        int groups = getEntryCount(c)/(coreCount-1);
-        System.out.println("groups ="+groups+" getEntryCount(c)="+getEntryCount(c)+" core="+(coreCount-1));
+        int entriesPerThread = (int) Math.ceil((double) getEntryCount(c)/(coreCount-1)); //mi permette di considerare
+                                                                //tutte le entry nel caso esse non siano perfettamente distribuite su ogni thread: es 4 prodotti e 3 core, 1 prodotto per ciascun thread non mi porta
+                                                                //completamente la matrice prodotto. Arrotondo all'intero successivo più piccolo per essere sicuro di
+                                                                //poter fare i prodotti necessari. Tuttavia devo limitare il poi il numero di prodotti
+                                                                //allo stretto necessario perche' rischio di accedere un elemento non definito.
+        System.out.println("groups ="+entriesPerThread+" getEntryCount(c)="+getEntryCount(c)+" core="+(coreCount-1));
         Runnable runnable = new Runnable() {
-            private static AtomicInteger group = new AtomicInteger(0);
+            private static AtomicInteger group = new AtomicInteger(-1);
             ThreadLocal<Integer> localGroup = new ThreadLocal<>() {
                     @Override protected Integer initialValue() {
                         return group.incrementAndGet();    
@@ -290,9 +294,12 @@ public class Main{
             @Override
             public void run() {
                 int bound = localGroup.get();
+                int start = bound * entriesPerThread;
+                int end = Math.min(start + entriesPerThread, firstMatrix.length);
                 System.out.println("Gruppo locale: "+bound);
-                for(int i = 0+groups*(bound-1); i<groups*bound+(getEntryCount(c) % bound); i++) {
+                for(int i = start; i<end; i++) {
                     products[i].executeRowColumnProduct();
+                    System.out.println(Thread.currentThread().getName() +products[i].toString());
                 }
 
 

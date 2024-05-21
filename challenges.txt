@@ -99,10 +99,12 @@ per ogni entrata della matrice prodotto viene creato
 un thread. La gestione di troppi thread crea overhead
 considerando l'inizializzazione e i frequenti context switch.
 Allora ho provato a limitare il numero di thread al numero
-di core disponibili sulla macchina. Inizialmente l'ho fatto
+di core disponibili sulla macchina, cosi' tutti thread che
+ho creato sono in esecuzione, in modo da minimizzare i context
+switch. Inizialmente l'ho fatto
 in maniera molto poco efficiente perche' ciascun thread
 eseguiva potenzialmente tutti i prodotti. Successivamente
-ho distribuito i prodotti nel modo più equo possibile
+ho distribuito i prodotti in un modo piu' equo
 e la situazione e' migliorata. Questo mi permette
 di far terminare prima l'esecuzione dei thread.
 Inoltre ho rimosso l'accesso sincronizzato alla matrice
