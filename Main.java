@@ -1,4 +1,6 @@
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 //import java.util.regex.Pattern;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,6 +22,9 @@ public class Main{
     private static long initCoreThreadEstimatedTime = 0;
     private static long insideCoreThreadStartTime;
     private static long insideCoreThreadEstimatedTime = 0;
+    private static long threadPoolStartTime;
+    private static long threadPoolEstimatedTime = 0;
+    private static ExecutorService threadPool;
     public static void main(String args[]) throws InterruptedException {
         /*SynchronizedMatrix firstMatrix = new SynchronizedMatrix(2, 2);
         SynchronizedMatrix secondMatrix = new SynchronizedMatrix(2, 2);
@@ -32,10 +37,10 @@ public class Main{
         int productResults[][][] = product(matrices);
         System.out.println("Elenco matrici prodotto:");
         //printMatrixArray(productResults);
-        while (areThreadsRunning.get() || areCoreThreadsRunning.get()) {}
+        while (areThreadsRunning.get() || areCoreThreadsRunning.get() || !threadPool.isShutdown()) {}
         System.out.println("Elenco matrici prodotto thread:");
         //printMatrixArray(productResults);
-        System.out.println("Durata comulativo del prodotto con un singolo thread singolo [ns]: "+singleThreadEstimatedTime);
+        System.out.println("Durata comulativa del prodotto con un singolo thread [ns]: "+singleThreadEstimatedTime);
         System.out.println();
         System.out.println("Durata cumulativa totale del prodotto con multipli thread [ns]: "+multiThreadEstimatedTime);
         System.out.println("Durata cumulativa del prodotto con multipli thread senza contare inizializzazione [ns]: "+insideMultiThreadEstimatedTime);
@@ -45,6 +50,7 @@ public class Main{
         System.out.println("Durata cumulativa del prodotto con 4 thread senza contare inizializzazione [ns]: "+insideCoreThreadEstimatedTime);
         System.out.println("Durata cumulativa dell'inizializzazione dei 4 thread [ns]: "+initCoreThreadEstimatedTime);
         System.out.println();
+        System.out.println("Durata comulativa del prodotto con un gruppo di thread senza contare inizializzazione [ns]: "+threadPoolEstimatedTime);
         /*int firstMatrix[][] = matrices[0];
         int secondMatrix[][] = matrices[1];
         printMatrix(firstMatrix);
@@ -101,7 +107,7 @@ public class Main{
         }
         System.out.println();
     }
-    public static void initProducts(RowColumnProduct[] products,
+    public static void createProducts(RowColumnProduct[] products,
                                         int[][] firstMatrix, int secondMatrix[][], int c[][]){
         if (isMatrixNull(firstMatrix) || isMatrixNull(secondMatrix)){
             System.out.println("Impossibile eseguire il prodotto perche' almeno una delle matrici non è stata definita.");
@@ -137,6 +143,7 @@ public class Main{
     public static int[][][] product(int[][][] matrices) throws InterruptedException {
         int numProducts = (int) matrices.length / 2;
         int matrixResults[][][] = new int[numProducts][][];
+        initThreadPool();
         for(int i=0; i+1<matrices.length; i +=2){
             int[][] firstMatrix = matrices[i];
             int[][] secondMatrix = matrices[i+1];
@@ -148,7 +155,7 @@ public class Main{
             }
             matrixResults[i/2] = new int[firstMatrix.length][secondMatrix[0].length];
             RowColumnProduct products[] = new RowColumnProduct[getEntryCount(matrixResults[i/2])];
-            initProducts(products, firstMatrix, secondMatrix, matrixResults[i/2]);
+            createProducts(products, firstMatrix, secondMatrix, matrixResults[i/2]);
             
             singleThreadStartTime = System.nanoTime();
             singleThreadMatrixProd(firstMatrix, secondMatrix, matrixResults[i/2], products);
@@ -161,6 +168,10 @@ public class Main{
             coreThreadStartTime = System.nanoTime();
             coreThreadMatrixProduct(firstMatrix, secondMatrix, matrixResults[i/2], products);
             coreThreadEstimatedTime = coreThreadEstimatedTime + (System.nanoTime() - coreThreadStartTime);
+            
+            threadPoolStartTime = System.nanoTime();
+            threadPoolMatrixProduct(products);
+            threadPoolEstimatedTime = threadPoolEstimatedTime + (System.nanoTime() - threadPoolStartTime);
             /*System.out.println("Durata del prodotto "+i/2+"-esimo "+"con un thread singolo [ns]: "+singleThreadEstimatedTime);
             System.out.println("Durata del prodotto "+i/2+"-esimo "+"con multipli thread [ns]: "+multiThreadEstimatedTime);
             System.out.println("Durata del prodotto "+i/2+"-esimo "+"con multipli thread senza contare inizializzazione [ns]: "+insideMultiThreadEstimatedTime);
@@ -181,6 +192,7 @@ public class Main{
             System.out.println(i);*/
 
         }
+        threadPool.shutdown();
         return matrixResults;
     }
 
@@ -292,7 +304,7 @@ public class Main{
                                                                 //allo stretto necessario perche' rischio di accedere un elemento non definito.
         //System.out.println("groups ="+entriesPerThread+" getEntryCount(c)="+getEntryCount(c)+" core="+(coreCount));
         Runnable runnable = new Runnable() {
-            private static AtomicInteger group = new AtomicInteger(-1);
+            private static AtomicInteger group = new AtomicInteger(-1); //sono sicuro che si potrebbe evitare di usarla.
             ThreadLocal<Integer> localGroup = new ThreadLocal<>() {
                     @Override protected Integer initialValue() {
                         return group.incrementAndGet();    
@@ -391,5 +403,16 @@ public class Main{
         insideMultiThreadEstimatedTime = System.nanoTime() - insideMultiThreadStartTime;
         areThreadsRunning.set(false);
     }*/
+    public static void initThreadPool() {
+        if (threadPool == null){
+            int coreCount = Runtime.getRuntime().availableProcessors();
+            threadPool = Executors.newFixedThreadPool(coreCount);
+        }
+    }
 
+    public static void threadPoolMatrixProduct(RowColumnProduct[] products) throws InterruptedException {
+        for (RowColumnProduct product : products) {
+            threadPool.execute(product);
+        }  
+    }
 }
