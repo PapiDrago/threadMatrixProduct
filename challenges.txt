@@ -111,9 +111,13 @@ Inoltre ho rimosso l'accesso sincronizzato alla matrice
 prodotto perche' creava ulteriore overhead.
 Chiaramente la soluzione con i thread scala meglio per
 matrici grandi.
+Nota che ho inizializzato 3 thread pur avendo 4 core perche'
+ho pensato di lasciarne uno al main thread e in ogni caso
+dopo aver confrontato il prodotto con 4 e 3 thread e risultato
+mediamente piu' veloce quello con 3.
+Ho provato a usare anche quello con 2 thread ma e' più veloce
+solamente se le dimensioni sono piccole.
+In realta' con 4 scala meglio, per grandi dimensioni meglio 4.
 
 -da implementare thread pool
-
-
--perché con i thread ci mette di più? Usare Thread local variabile
 -aggiungere docs.
