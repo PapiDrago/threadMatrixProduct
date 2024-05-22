@@ -3,7 +3,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-
+/**
+ * This class provides an example of logic to compare the performances
+ * (i.e. execution times) of different ways to do a matricial
+ * product pertaining the use of threads.
+ * These different approaches are: with a single thread, with multiple threads, with
+ * a fixed number of threads, and with a thread pool.
+ * 
+ * @author Claudio Guarrasi
+ */
 public class Main{
     private static AtomicBoolean areThreadsRunning = new AtomicBoolean(false);
     private static AtomicBoolean areCoreThreadsRunning = new AtomicBoolean(false);
@@ -24,6 +32,13 @@ public class Main{
     private static long threadPoolStartTime;
     private static long threadPoolEstimatedTime = 0;
     private static ExecutorService threadPool;
+    
+    /**
+     * The entry point of the program.
+     * 
+     * @param args
+     * @throws InterruptedException
+     */
     public static void main(String args[]) throws InterruptedException {
         int matrices[][][] = initMatricesFromArguments(args);
         //printMatrixArray(matrices);
@@ -47,6 +62,15 @@ public class Main{
         System.out.println("Durata comulativa del prodotto con un gruppo di thread senza contare inizializzazione [ns]: "+threadPoolEstimatedTime);
     }
 
+    /**
+     * Returns a matrix defined by the dimensions passed as
+     * arguments and formed by entries, whose values are
+     * pseudo-random generated. 
+     * 
+     * @param rows
+     * @param columns
+     * @return
+     */
     public static int[][] initMatrix(int rows, int columns) {
         Random randomStream = new Random();
         int matrix[][] = new int[rows][columns];
@@ -58,6 +82,11 @@ public class Main{
         return matrix;
     }
 
+    /**
+     * Prints the entries of the matrix passed as argument.
+     * 
+     * @param matrix
+     */
     public static void printMatrix(int[][] matrix) {
         if (isMatrixNull(matrix)) {
             System.out.println("La matrice non è stata definita.");
@@ -71,6 +100,21 @@ public class Main{
         }
         System.out.println();
     }
+    
+    /**
+     * Creates the elements of a RowColumnProductArray.
+     * Each array corresponds to a matricial product.
+     * Each element of the array corresponds to an entry of the
+     * matrix obtained from the product.
+     * To obtain the entry Cij of the resulting matrix,
+     * are needed the i-th row of the first matrix
+     * and the j-th column of the second matrix.
+     * 
+     * @param products
+     * @param firstMatrix
+     * @param secondMatrix
+     * @param resultMatrix
+     */
     public static void createProducts(RowColumnProduct[] products,
                                         int[][] firstMatrix, int secondMatrix[][], int resultMatrix[][]){
         if (isMatrixNull(firstMatrix) || isMatrixNull(secondMatrix)){
@@ -87,12 +131,33 @@ public class Main{
     }
 
 
+    /**
+     * As the name says, a matricial product is carried out, entirely,
+     * by a single thread.
+     * 
+     * @param products
+     */
     public static void singleThreadMatrixProd(RowColumnProduct[] products){
         for (RowColumnProduct product : products) {
             product.executeRowColumnProduct();
         }
     }
 
+    /**
+     * This method executes all the products available.
+     * For each couple of matrices in 'matrices' 3D array there
+     * is a product. That product is then carried out in different
+     * ways: with a single thread, with multiple threads, with
+     * a fixed number of threads, and with a thread pool.
+     * That is done to compare the execution times of the
+     * different approaches.
+     * If the number of matrices in 'matrices' 3D array is uneven,
+     * the matrix contained in the last array position is not used.
+     * 
+     * @param matrices
+     * @return the array containing the matrices generated from the products
+     * @throws InterruptedException
+     */
     public static int[][][] product(int[][][] matrices) throws InterruptedException {
         int numProducts = (int) matrices.length / 2;
         int matrixResults[][][] = new int[numProducts][][];
@@ -130,6 +195,12 @@ public class Main{
         return matrixResults;
     }
 
+    /**
+     * Initializes matrices according to command-line arguments.
+     * Returns an array of matrices.
+     * @param args
+     * @return matrices
+     */
     public static int[][][] initMatricesFromArguments(String[] args){
         if(args.length == 0) {
             System.out.println("Inizialiazzazione di due matrici 2x2.");
@@ -165,22 +236,49 @@ public class Main{
         }
         return matrices;
     }
+    
+    /**
+     * Check if a matrix has been initialized.
+     * 
+     * @param matrix
+     * @return
+     */
     public static boolean isMatrixNull(int[][] matrix){
         return matrix == null;
     }
 
+    /**
+     * Returns the entries number of a matrix.
+     * It is equal to the product between the number of the rows
+     * and the number of the columns.
+     * 
+     * @param matrix
+     * @return
+     */
     public static int getEntryCount(int[][] matrix) {
         return matrix.length*matrix[0].length;
     }
 
+    /**
+     * Prints the matrices contained in the array of matrices passed as argument.
+     * @param matrixArray
+     */
     public static void printMatrixArray(int[][][] matrixArray) {
-
         for (int i = 0; i<matrixArray.length; i++) {
             System.out.println("Matrice n"+i);
             printMatrix(matrixArray[i]);
         }
     }
 
+    /**
+     * Extrapolates from the 'arg' string a couple
+     * of (sub)strings according a format.
+     * If
+     * 
+     * @param arg
+     * @return
+     * @throws IllegalArgumentException
+     */
     public static String[] getDimensionsFromArg(String arg) throws IllegalArgumentException {
         String[] dimensions = arg.split(",");
         if (dimensions.length != 2) {
@@ -189,12 +287,31 @@ public class Main{
             }
         return dimensions;
     }
+    
+    /**
+     * Checks if the number provided are valid dimension values.
+     * 
+     * @param rows
+     * @param cols
+     * @return
+     */
     public static boolean AreDimensionsMeaningful(int rows, int cols) {
         if (rows <= 0 || cols <= 0) {
             return false;
         }
         return true;
     }
+    
+    /**
+     * Executes the matricial product by generating a thread for each
+     * of the row column products needed to get the resulting matrix c.
+     * 
+     * @param firstMatrix
+     * @param secondMatrix
+     * @param c
+     * @param products
+     * @throws InterruptedException
+     */
     public static void multiThreadMatrixProduct(int[][] firstMatrix,
                                 int[][] secondMatrix, int[][] c, RowColumnProduct[] products) throws InterruptedException {
         initMultiThreadStartTime = System.nanoTime();
@@ -207,6 +324,15 @@ public class Main{
         insideMultiThreadEstimatedTime = insideMultiThreadEstimatedTime + (System.nanoTime() - insideMultiThreadStartTime);
         areThreadsRunning.set(false);
     }
+    
+    /**
+     * Multiplicates two matrices using a number of threads equals
+     * to the number of cores.
+     * 
+     * @param c
+     * @param products
+     * @throws InterruptedException
+     */
     public static void coreThreadMatrixProduct(int[][] c, RowColumnProduct[] products) throws InterruptedException {
         int coreCount = Runtime.getRuntime().availableProcessors();
         int entriesPerThread = (int) Math.ceil((double) getEntryCount(c)/(coreCount)); //mi permette di considerare
@@ -215,7 +341,21 @@ public class Main{
                                                                 //poter fare i prodotti necessari. Tuttavia devo limitare il numero di prodotti
                                                                 //allo stretto necessario perche' rischio di accedere a un elemento non definito.
         Runnable runnable = new Runnable() {
-            private static AtomicInteger group = new AtomicInteger(-1); //sono sicuro che si potrebbe evitare di usarla.
+            
+            /*
+             * At each thread is assigned a group of products.
+             * Each group of product count entriesPerThread products.
+             * In practice, the group variable will be enveloped in
+             * a ThreadLocal object. It starts from -1 in order to
+             * let the running threads reading in a synchronized way
+             * only matching non-negative value starting from 0.
+             */
+            private static AtomicInteger group = new AtomicInteger(-1);
+
+            /*
+             * Each running thread gets atomically a particular value of
+             * the static group variable at the instantiation of a ThreadLocal object.
+             */
             ThreadLocal<Integer> localGroup = new ThreadLocal<>() {
                     @Override protected Integer initialValue() {
                         return group.incrementAndGet();    
@@ -225,6 +365,13 @@ public class Main{
             public void run() {
                 int bound = localGroup.get();
                 int start = bound * entriesPerThread;
+                /*
+                 * The value assigned to 'end' is the minimum because
+                 * if the sum of all the products to execute by each thread
+                 * is greater than the actual number of products, then
+                 * an ArrayIndexOutOfBoundException woul be thrown!
+                 * In that case products.length value is assigned instead.
+                 */
                 int end = Math.min(start + entriesPerThread, products.length);
                 //System.out.println("Gruppo locale: "+bound);
                 for(int i = start; i<end; i++) {
@@ -245,9 +392,12 @@ public class Main{
         insideCoreThreadEstimatedTime = insideCoreThreadEstimatedTime + (System.nanoTime() - insideCoreThreadStartTime);
         areCoreThreadsRunning.set(false);
     }
+    
     /**
-     * @param firstMatrix
-     * @param secondMatrix
+     * Multiplicates two matrices using a number of threads equals
+     * to the number of cores. In this method the thread local
+     * variables are not used.
+     * 
      * @param c
      * @param products
      * @throws InterruptedException
@@ -259,9 +409,26 @@ public class Main{
         initMultiThreadStartTime = System.nanoTime();
         Thread[] threads = new Thread[coreCount];
         for (int i = 0; i<threads.length; i++) {
+            
+            /*
+             * Lets the inner for loop to start from the right
+             * position in order to avoid that a running threads
+             * write at the same memory address of other ones.
+             * It is declared final because the compiler needs
+             * to capture the variable in order to use it in
+             * the lambda expression of the Runnable object.
+             */
             final int bound = i;
             threads[i] = new Thread(() -> {
                 int start = bound * entriesPerThread;
+
+                /*
+                 * The value assigned to 'end' is the minimum because
+                 * if the sum of all the products to execute by each thread
+                 * is greater than the actual number of products, then
+                 * an ArrayIndexOutOfBoundException woul be thrown!
+                 * In that case products.length value is assigned instead.
+                 */
                 int end = Math.min(start + entriesPerThread, products.length);
                 for(int k = start; k<end; k++) {
                     products[k].executeRowColumnProduct();
@@ -278,6 +445,15 @@ public class Main{
         insideMultiThreadEstimatedTime = System.nanoTime() - insideMultiThreadStartTime;
         areThreadsRunning.set(false);
     }
+    
+    /**
+     * A general method to initialize threads in a vector, given
+     * an array of Runnable objects.
+     * 
+     * @param n
+     * @param runnables
+     * @return
+     */
     public static Thread[] initThreads(int n, Runnable[] runnables) {
         Thread[] threads = new Thread[n];
         for(int k = 0; k<n; k++){
@@ -285,16 +461,35 @@ public class Main{
         }
         return threads;
     }
+    
+    /**
+     * A general method to start an array of threads.
+     * 
+     * @param threads
+     */
     public static void startThreads(Thread[] threads){
         for (int k=0; k<threads.length; k++) {
             threads[k].start();
         }
     }
+    
+    /**
+     * Joins an array of running threads.
+     * 
+     * @param threads
+     * @throws InterruptedException
+     */
     public static void waitForThreadsToDie(Thread[] threads) throws InterruptedException {
         for (int k=0; k<threads.length; k++) {
             threads[k].join();
         }
     }
+    
+    /**
+     * Initialize a thread pool formed by a number of threads
+     * equals to the number of cores.
+     * 
+     */
     public static void initThreadPool() {
         if (threadPool == null){
             int coreCount = Runtime.getRuntime().availableProcessors();
@@ -302,6 +497,13 @@ public class Main{
         }
     }
 
+    /**
+     * Executes a matricial product using a thread pool
+     * and an array of RowColumnProduct objects.
+     * 
+     * @param products
+     * @throws InterruptedException
+     */
     public static void threadPoolMatrixProduct(RowColumnProduct[] products) throws InterruptedException {
         for (RowColumnProduct product : products) {
             threadPool.execute(product);
