@@ -1,4 +1,6 @@
 import java.util.Random;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -32,6 +34,8 @@ public class Main{
     private static long threadPoolStartTime;
     private static long threadPoolEstimatedTime = 0;
     private static ExecutorService threadPool;
+
+    private static CyclicBarrier barrier;
     
     /**
      * The entry point of the program.
@@ -41,14 +45,15 @@ public class Main{
      */
     public static void main(String args[]) throws InterruptedException {
         int matrices[][][] = initMatricesFromArguments(args);
-        //printMatrixArray(matrices);
+        printMatrixArray(matrices);
         @SuppressWarnings("unused")
         int productResults[][][] = product(matrices);
         System.out.println("Elenco matrici prodotto:");
         //printMatrixArray(productResults);
         while (areThreadsRunning.get() || areCoreThreadsRunning.get() || !threadPool.isShutdown()) {}
-        //System.out.println("Elenco matrici prodotto thread:");
-        //printMatrixArray(productResults);
+        System.out.println("Elenco matrici prodotto thread:");
+        printMatrixArray(productResults);
+        
         System.out.println("Durata comulativa del prodotto con un singolo thread [ns]: "+singleThreadEstimatedTime);
         System.out.println();
         System.out.println("Durata cumulativa totale del prodotto con multipli thread [ns]: "+multiThreadEstimatedTime);
@@ -176,20 +181,22 @@ public class Main{
             createProducts(products, firstMatrix, secondMatrix, matrixResults[i/2]);
             
             singleThreadStartTime = System.nanoTime();
-            singleThreadMatrixProd(products);
+            //singleThreadMatrixProd(products);
             singleThreadEstimatedTime = singleThreadEstimatedTime + (System.nanoTime() - singleThreadStartTime);
             
             multiThreadStartTime = System.nanoTime();
-            multiThreadMatrixProduct(firstMatrix, secondMatrix, matrixResults[i/2], products);
+            //multiThreadMatrixProduct(firstMatrix, secondMatrix, matrixResults[i/2], products);
             multiThreadEstimatedTime = multiThreadEstimatedTime + (System.nanoTime() - multiThreadStartTime);
             
             coreThreadStartTime = System.nanoTime();
-            coreThreadMatrixProduct(matrixResults[i/2], products);
+            //coreThreadMatrixProduct(matrixResults[i/2], products);
             coreThreadEstimatedTime = coreThreadEstimatedTime + (System.nanoTime() - coreThreadStartTime);
             
             threadPoolStartTime = System.nanoTime();
-            threadPoolMatrixProduct(products);
+            //threadPoolMatrixProduct(products);
             threadPoolEstimatedTime = threadPoolEstimatedTime + (System.nanoTime() - threadPoolStartTime);
+
+            barrierThreadMatrixProduct(firstMatrix, secondMatrix, matrixResults[i/2]);
         }
         threadPool.shutdown();
         return matrixResults;
@@ -508,5 +515,58 @@ public class Main{
         for (RowColumnProduct product : products) {
             threadPool.execute(product);
         }  
+    }
+
+    public static void barrierThreadMatrixProduct(int[][] firstMatrix, int[][] secondMatrix, int[][] c) throws InterruptedException{
+        final int coreCount = Runtime.getRuntime().availableProcessors();
+        int addends[] = new int[firstMatrix[0].length];
+        Runnable barrierAction = new Runnable() {
+            int i = 0;
+            int j = 0;
+            @Override
+            public void run() {
+                int sum = 0;
+                for (int addend : addends) {
+                    sum = sum + addend;
+                }
+                c[i][j] = sum;
+                i = (i + 1) % firstMatrix.length;
+                if (i == 0){
+                    j = (j + 1) % secondMatrix[0].length;
+                }
+            } 
+        };
+        
+        
+        barrier = new CyclicBarrier(coreCount, barrierAction);
+        Thread threads[] = new Thread[coreCount];
+        int colsPerThread = (int) Math.ceil((double) firstMatrix.length / coreCount);
+        for (int i = 0; i<threads.length; i++) {
+            final int bound = i;
+            threads[i] = new Thread(() -> {
+                int startCol = bound * colsPerThread;
+                int endCol = Math.min(startCol + colsPerThread, firstMatrix[0].length);
+                for(int colB = 0; colB<secondMatrix[0].length; colB++){
+                    for(int rowA = 0; rowA<firstMatrix.length; rowA++){
+                        for(int colA = startCol; colA<endCol; colA++){
+                            addends[colA] = firstMatrix[rowA][colA]*secondMatrix[colA][colB];
+                        }
+                        try {
+                            barrier.await();
+                        } catch (InterruptedException e) {
+                            return;
+                        } catch (BrokenBarrierException e) {
+                            return;
+                        }
+                        
+                    }
+                }
+                
+            });
+        }
+        startThreads(threads);
+        areThreadsRunning.set(true);
+        waitForThreadsToDie(threads);
+        areThreadsRunning.set(false);
     }
 }
