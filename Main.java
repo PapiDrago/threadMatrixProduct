@@ -1,3 +1,5 @@
+import java.text.NumberFormat;
+import java.util.Locale;
 import java.util.Random;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
@@ -17,6 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Main{
     private static AtomicBoolean areThreadsRunning = new AtomicBoolean(false);
     private static AtomicBoolean areCoreThreadsRunning = new AtomicBoolean(false);
+    
     private static long singleThreadStartTime;
     private static long singleThreadEstimatedTime = 0;
     private static long multiThreadStartTime;
@@ -33,8 +36,10 @@ public class Main{
     private static long insideCoreThreadEstimatedTime = 0;
     private static long threadPoolStartTime;
     private static long threadPoolEstimatedTime = 0;
+    private static long barrierStartTime = 0;
+    private static long barrierEstimatedTime;
+    
     private static ExecutorService threadPool;
-
     private static CyclicBarrier barrier;
     
     /**
@@ -49,22 +54,24 @@ public class Main{
         @SuppressWarnings("unused")
         int productResults[][][] = product(matrices);
         System.out.println("Elenco matrici prodotto:");
-        //printMatrixArray(productResults);
+        printMatrixArray(productResults);
         while (areThreadsRunning.get() || areCoreThreadsRunning.get() || !threadPool.isShutdown()) {}
         System.out.println("Elenco matrici prodotto thread:");
         printMatrixArray(productResults);
         
-        System.out.println("Durata comulativa del prodotto con un singolo thread [ns]: "+singleThreadEstimatedTime);
+        System.out.println("Durata comulativa del prodotto con un singolo thread [ns]: "+NumberFormat.getInstance(Locale.ITALIAN).format(singleThreadEstimatedTime));
         System.out.println();
-        System.out.println("Durata cumulativa totale del prodotto con multipli thread [ns]: "+multiThreadEstimatedTime);
-        System.out.println("Durata cumulativa del prodotto con multipli thread senza contare inizializzazione [ns]: "+insideMultiThreadEstimatedTime);
-        System.out.println("Durata cumulativa dell'inizializzazione dei multipli thread [ns]: "+initMultiThreadEstimatedTime);
+        System.out.println("Durata cumulativa totale del prodotto con multipli thread [ns]: "+NumberFormat.getInstance(Locale.ITALIAN).format(multiThreadEstimatedTime));
+        System.out.println("Durata cumulativa del prodotto con multipli thread senza contare inizializzazione [ns]: "+NumberFormat.getInstance(Locale.ITALIAN).format(insideMultiThreadEstimatedTime));
+        System.out.println("Durata cumulativa dell'inizializzazione dei multipli thread [ns]: "+NumberFormat.getInstance(Locale.ITALIAN).format(initMultiThreadEstimatedTime));
         System.out.println();
-        System.out.println("Durata cumulativa totale del prodotto con 4 thread [ns]: "+coreThreadEstimatedTime);
-        System.out.println("Durata cumulativa del prodotto con 4 thread senza contare inizializzazione [ns]: "+insideCoreThreadEstimatedTime);
-        System.out.println("Durata cumulativa dell'inizializzazione dei 4 thread [ns]: "+initCoreThreadEstimatedTime);
+        System.out.println("Durata cumulativa totale del prodotto con 4 thread [ns]: "+NumberFormat.getInstance(Locale.ITALIAN).format(coreThreadEstimatedTime));
+        System.out.println("Durata cumulativa del prodotto con 4 thread senza contare inizializzazione [ns]: "+NumberFormat.getInstance(Locale.ITALIAN).format(insideCoreThreadEstimatedTime));
+        System.out.println("Durata cumulativa dell'inizializzazione dei 4 thread [ns]: "+ NumberFormat.getInstance(Locale.ITALIAN).format(initCoreThreadEstimatedTime));
         System.out.println();
-        System.out.println("Durata comulativa del prodotto con un gruppo di thread senza contare inizializzazione [ns]: "+threadPoolEstimatedTime);
+        System.out.println("Durata comulativa del prodotto con un gruppo di thread senza contare inizializzazione [ns]: "+ NumberFormat.getInstance(Locale.ITALIAN).format(threadPoolEstimatedTime));
+        System.out.println();
+        System.out.println("Durata comulativa del prodotto con 4 thread e una barriera [ns]: "+ NumberFormat.getInstance(Locale.ITALIAN).format(barrierEstimatedTime));
     }
 
     /**
@@ -181,22 +188,24 @@ public class Main{
             createProducts(products, firstMatrix, secondMatrix, matrixResults[i/2]);
             
             singleThreadStartTime = System.nanoTime();
-            //singleThreadMatrixProd(products);
+            singleThreadMatrixProd(products);
             singleThreadEstimatedTime = singleThreadEstimatedTime + (System.nanoTime() - singleThreadStartTime);
             
             multiThreadStartTime = System.nanoTime();
-            //multiThreadMatrixProduct(firstMatrix, secondMatrix, matrixResults[i/2], products);
+            multiThreadMatrixProduct(firstMatrix, secondMatrix, matrixResults[i/2], products);
             multiThreadEstimatedTime = multiThreadEstimatedTime + (System.nanoTime() - multiThreadStartTime);
             
             coreThreadStartTime = System.nanoTime();
-            //coreThreadMatrixProduct(matrixResults[i/2], products);
+            coreThreadMatrixProduct(matrixResults[i/2], products);
             coreThreadEstimatedTime = coreThreadEstimatedTime + (System.nanoTime() - coreThreadStartTime);
             
             threadPoolStartTime = System.nanoTime();
-            //threadPoolMatrixProduct(products);
+            threadPoolMatrixProduct(products);
             threadPoolEstimatedTime = threadPoolEstimatedTime + (System.nanoTime() - threadPoolStartTime);
 
+            barrierStartTime = System.nanoTime();
             barrierThreadMatrixProduct(firstMatrix, secondMatrix, matrixResults[i/2]);
+            barrierEstimatedTime = barrierEstimatedTime + (System.nanoTime() - barrierStartTime);
         }
         threadPool.shutdown();
         return matrixResults;
