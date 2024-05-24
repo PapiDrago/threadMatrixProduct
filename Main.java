@@ -536,8 +536,6 @@ public class Main{
                 }
             } 
         };
-        
-        
         barrier = new CyclicBarrier(coreCount, barrierAction);
         Thread threads[] = new Thread[coreCount];
         int colsPerThread = (int) Math.ceil((double) firstMatrix.length / coreCount);
@@ -557,11 +555,9 @@ public class Main{
                             return;
                         } catch (BrokenBarrierException e) {
                             return;
-                        }
-                        
+                        }  
                     }
-                }
-                
+                } 
             });
         }
         startThreads(threads);
