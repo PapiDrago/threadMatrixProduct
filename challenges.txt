@@ -118,6 +118,3 @@ mediamente piu' veloce quello con 3.
 Ho provato a usare anche quello con 2 thread ma e' più veloce
 solamente se le dimensioni sono piccole.
 In realta' con 4 scala meglio, per grandi dimensioni meglio 4.
-
--da implementare thread pool
--aggiungere docs.
