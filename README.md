@@ -35,4 +35,4 @@ For example:
 There will be generated two matrices. The first with dimension '2x4', the second one with order '4x2'.
 
 ## License
-[MIT](https://choosealicense.com/licenses/mit/)
+[MIT](LICENSE)
