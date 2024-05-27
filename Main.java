@@ -19,7 +19,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Main{
     private static AtomicBoolean areThreadsRunning = new AtomicBoolean(false);
     private static AtomicBoolean areCoreThreadsRunning = new AtomicBoolean(false);
-    
+
+    private static final int DIM_BOUND = 10;
+    private static final int ENTRY_BOUND = 100;
+
     private static long singleThreadStartTime;
     private static long singleThreadEstimatedTime = 0;
     private static long multiThreadStartTime;
@@ -88,7 +91,7 @@ public class Main{
         int matrix[][] = new int[rows][columns];
         for (int i=0; i<rows; i++) {
             for (int j=0; j<columns; j++) {
-                matrix[i][j] = randomStream.nextInt(10);
+                matrix[i][j] = randomStream.nextInt(ENTRY_BOUND);
             }
         }
         return matrix;
@@ -218,6 +221,7 @@ public class Main{
      * @return matrices
      */
     public static int[][][] initMatricesFromArguments(String[] args){
+        int matrixCount = args.length;
         if(args.length == 0) {
             System.out.println("Inizialiazzazione di due matrici 2x2.");
             int matrices[][][] = new int[2][][];
@@ -226,33 +230,50 @@ public class Main{
             matrices[0] = initMatrix(2, 2);
             matrices[1] = initMatrix(2, 2);
             return matrices;
-        }
-        int matrices[][][] = new int[args.length][][];
-        for (int i = 0; i<args.length; i++){
-            try {
-                String[] dimensions = getDimensionsFromArg(args[i]);
-                int rows = Integer.parseInt(dimensions[0]);
-                int cols = Integer.parseInt(dimensions[1]);
-                if (!AreDimensionsMeaningful(rows, cols)) {
-                    throw new IllegalArgumentException("dimensioni "
-                    +"della matrice non corrette, devono essere strettamente positive.");
+        } else if (args.length == 1 && args[0].matches("[0-9]+")) {
+                matrixCount = Integer.parseInt(args[0]);
+                if (matrixCount < 2) {
+                    throw new IllegalArgumentException("numero di matrici da creare per fare almeno un prodotto non signifificativo,"
+                    +"\ndeve essere maggiore di 1 se si desidera un preciso numero di matrici da inizializzare delle quali fare il prodotto.");
                 }
-                matrices[i] = initMatrix(rows, cols);
-            } catch (NumberFormatException e) {
-                System.err.println("Errore nel parsing di '"+args[i]+"'."+
-                " La stringa contiene un valore che non rappresenta un numero intero. "+ e.getMessage());
-                matrices[i] = null;
-                //System.exit(1);
-            } catch (IllegalArgumentException e ) {
-                System.err.println("Errore nella gestione di '"+args[i]+"':"+
-                " "+ e.getMessage());
-                matrices[i] = null;
-                //System.exit(1);
+                int matrices[][][] = new int[matrixCount][][];
+                for (int i = 0; i+1<matrixCount; i+=2) {
+                    matrices[i] = getMatrixFromArg(null);
+                    matrices[i+1] = initMatrix(matrices[i][0].length, (1 + new Random().nextInt(DIM_BOUND)));
+                }
+                return matrices;
+        } else {
+            int matrices[][][] = new int[args.length][][];
+            for (int i = 0; i<args.length; i++) {
+                matrices[i] = getMatrixFromArg(args[i]);
             }
+            return matrices;
         }
-        return matrices;
     }
     
+    private static int[][] getMatrixFromArg(String arg) {
+        try {
+            String[] dimensions = getStringDimensionsFromArg(arg);
+            int rows = Integer.parseInt(dimensions[0]);
+            int cols = Integer.parseInt(dimensions[1]);
+            if (!AreDimensionsMeaningful(rows, cols)) {
+                 throw new IllegalArgumentException("dimensioni "
+                +"della matrice non corrette, devono essere strettamente positive.");
+            }
+            return initMatrix(rows, cols);
+        } catch (NumberFormatException e) {
+            System.err.println("Errore nel parsing di '"+arg+"'."+
+            " La stringa contiene un valore che non rappresenta un numero intero. "+ e.getMessage());
+            return null;
+            //System.exit(1);
+        } catch (IllegalArgumentException e ) {
+            System.err.println("Errore nella gestione di '"+arg+"':"+
+            " "+ e.getMessage());
+            return null;
+            //System.exit(1);
+        }
+    }
+
     /**
      * Check if a matrix has been initialized.
      * 
@@ -289,18 +310,37 @@ public class Main{
     /**
      * Extrapolates from the 'arg' string a couple
      * of (sub)strings according a format.
-     * If
+     * 
+     * to update
      * 
      * @param arg
      * @return
      * @throws IllegalArgumentException
      */
-    public static String[] getDimensionsFromArg(String arg) throws IllegalArgumentException {
-        String[] dimensions = arg.split(",");
+    public static String[] getStringDimensionsFromArg(String arg) throws IllegalArgumentException {
+        String[] dimensions;
+        if (arg == null) {
+            Random randomStream = new Random();
+            int rows = 1 + randomStream.nextInt(DIM_BOUND);
+            int cols = 1 + randomStream.nextInt(DIM_BOUND);
+            dimensions = new String[2];
+            dimensions[0] = String.valueOf(rows);
+            dimensions[1] = String.valueOf(cols);
+            return dimensions;
+
+        }
+        dimensions = arg.split(",");
         if (dimensions.length != 2) {
                 throw new IllegalArgumentException("formato "+
-                "dell'input invalido, richiesto '[righe],[colonne]'.");
+                "dell'input invalido, richiesto '[righe],[colonne]' in caso si desideri inserire almeno una matrice di dimensioni scelte.");
             }
+        return dimensions;
+    }
+
+    public static int[] getDimensionsFromString (String[] stringDimensions){
+        int dimensions[] = new int[2];
+        dimensions[0] = Integer.parseInt(stringDimensions[0]);
+        dimensions[1] = Integer.parseInt(stringDimensions[1]);
         return dimensions;
     }
     
@@ -396,7 +436,7 @@ public class Main{
             }
         };
         initCoreThreadStartTime = System.nanoTime();
-        Thread[] threads = initThreads(coreCount, products);
+        Thread[] threads = new Thread[coreCount];
         for(int k = 0; k<threads.length; k++){
             threads[k] = new Thread(runnable);
         }
