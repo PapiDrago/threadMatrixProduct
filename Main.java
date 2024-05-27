@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * (i.e. execution times) of different ways to do a matricial
  * product pertaining the use of threads.
  * These different approaches are: with a single thread, with multiple threads, with
- * a fixed number of threads, and with a thread pool.
+ * a fixed number of threads, with a thread pool and with a cyclic barrier.
  * 
  * @author Claudio Guarrasi
  */
@@ -37,6 +37,8 @@ public class Main{
     private static long initCoreThreadEstimatedTime = 0;
     private static long insideCoreThreadStartTime;
     private static long insideCoreThreadEstimatedTime = 0;
+    private static long initThreadPoolStartTime;
+    private static long initThreadPoolEstimatedTime = 0;
     private static long threadPoolStartTime;
     private static long threadPoolEstimatedTime = 0;
     private static long barrierStartTime = 0;
@@ -73,6 +75,7 @@ public class Main{
         System.out.println("Durata cumulativa dell'inizializzazione dei 4 thread [ns]: "+ NumberFormat.getInstance(Locale.ITALIAN).format(initCoreThreadEstimatedTime));
         System.out.println();
         System.out.println("Durata comulativa del prodotto con un gruppo di thread senza contare inizializzazione [ns]: "+ NumberFormat.getInstance(Locale.ITALIAN).format(threadPoolEstimatedTime));
+        System.out.println("Durata dell'inizializzazione del gruppo di thread [ns]: " + NumberFormat.getInstance(Locale.ITALIAN).format(initThreadPoolEstimatedTime));
         System.out.println();
         System.out.println("Durata comulativa del prodotto con 4 thread e una barriera [ns]: "+ NumberFormat.getInstance(Locale.ITALIAN).format(barrierEstimatedTime));
     }
@@ -84,7 +87,7 @@ public class Main{
      * 
      * @param rows
      * @param columns
-     * @return
+     * @return a matrix dimensioned by the paramaters passed
      */
     public static int[][] initMatrix(int rows, int columns) {
         Random randomStream = new Random();
@@ -163,7 +166,7 @@ public class Main{
      * For each couple of matrices in 'matrices' 3D array there
      * is a product. That product is then carried out in different
      * ways: with a single thread, with multiple threads, with
-     * a fixed number of threads, and with a thread pool.
+     * a fixed number of threads, with a thread pool and with a cyclic barrier.
      * That is done to compare the execution times of the
      * different approaches.
      * If the number of matrices in 'matrices' 3D array is uneven,
@@ -174,9 +177,11 @@ public class Main{
      * @throws InterruptedException
      */
     public static int[][][] product(int[][][] matrices) throws InterruptedException {
-        int numProducts = (int) matrices.length / 2;
-        int matrixResults[][][] = new int[numProducts][][];
+        int productCount = (int) matrices.length / 2;
+        int matrixResults[][][] = new int[productCount][][];
+        initThreadPoolStartTime = System.nanoTime();
         initThreadPool();
+        initThreadPoolEstimatedTime = initThreadPoolEstimatedTime + (System.nanoTime() - initThreadPoolStartTime);
         for(int i=0; i+1<matrices.length; i +=2) {
             int[][] firstMatrix = matrices[i];
             int[][] secondMatrix = matrices[i+1];
@@ -216,9 +221,17 @@ public class Main{
 
     /**
      * Initializes matrices according to command-line arguments.
-     * Returns an array of matrices.
+     * If there is just one argument representing an int number n,
+     * then n matrices are initialized with dimensions equals to a
+     * "random" value, but, in order to ensure a well defined matricial
+     * product, the subsequent matrix in a couple has always a number
+     * of rows equal to the previous one.
+     * 
+     * If there are k arguments with the following format '[rows],[cols]',
+     * then k matrix are generated using the dimensions provided.
+     * 
      * @param args
-     * @return matrices
+     * @return a list of matrices
      */
     public static int[][][] initMatricesFromArguments(String[] args){
         int matrixCount = args.length;
@@ -232,9 +245,14 @@ public class Main{
             return matrices;
         } else if (args.length == 1 && args[0].matches("[0-9]+")) {
                 matrixCount = Integer.parseInt(args[0]);
-                if (matrixCount < 2) {
-                    throw new IllegalArgumentException("numero di matrici da creare per fare almeno un prodotto non signifificativo,"
-                    +"\ndeve essere maggiore di 1 se si desidera un preciso numero di matrici da inizializzare delle quali fare il prodotto.");
+                try {
+                    if (matrixCount < 2) {
+                        throw new IllegalArgumentException("numero di matrici da creare per fare almeno un prodotto non signifificativo,"
+                        +"\ndeve essere maggiore di 1 se si desidera un preciso numero di matrici da inizializzare delle quali fare il prodotto.");
+                    }
+                } catch (IllegalArgumentException e) {
+                    System.err.println(("Errore nella gestione di '"+args[0]+"':"+
+                    " "+ e.getMessage()));
                 }
                 int matrices[][][] = new int[matrixCount][][];
                 for (int i = 0; i+1<matrixCount; i+=2) {
@@ -251,6 +269,13 @@ public class Main{
         }
     }
     
+    /**
+     * This method cast to int dimensions extrapolated
+     * from command-line arguments.
+     * 
+     * @param arg
+     * @return a matrix with proper dimensions
+     */
     private static int[][] getMatrixFromArg(String arg) {
         try {
             String[] dimensions = getStringDimensionsFromArg(arg);
@@ -309,9 +334,10 @@ public class Main{
 
     /**
      * Extrapolates from the 'arg' string a couple
-     * of (sub)strings according a format.
+     * of (sub)strings according to a format.
      * 
-     * to update
+     * If a null pointer is passed, it returns
+     * a couple of dimensions "randomly" generated.
      * 
      * @param arg
      * @return
@@ -327,7 +353,6 @@ public class Main{
             dimensions[0] = String.valueOf(rows);
             dimensions[1] = String.valueOf(cols);
             return dimensions;
-
         }
         dimensions = arg.split(",");
         if (dimensions.length != 2) {
@@ -337,6 +362,14 @@ public class Main{
         return dimensions;
     }
 
+    /**
+     * Cast to int the string values of the matrix
+     * dimensions.
+     * 
+     * @param stringDimensions it is an array of strings containing at index 0 the
+     * the string value of the rows, and at index 1 the string value of the columns.
+     * @return
+     */
     public static int[] getDimensionsFromString (String[] stringDimensions){
         int dimensions[] = new int[2];
         dimensions[0] = Integer.parseInt(stringDimensions[0]);
@@ -391,11 +424,14 @@ public class Main{
      */
     public static void coreThreadMatrixProduct(int[][] c, RowColumnProduct[] products) throws InterruptedException {
         int coreCount = Runtime.getRuntime().availableProcessors();
-        int entriesPerThread = (int) Math.ceil((double) getEntryCount(c)/(coreCount)); //mi permette di considerare
-                                                                //tutte le entry nel caso esse non siano perfettamente distribuite su ogni thread: es 4 prodotti e 3 core, 1 prodotto per ciascun thread non mi genera
-                                                                //completamente la matrice prodotto. Arrotondo all'intero successivo più piccolo per essere sicuro di
-                                                                //poter fare i prodotti necessari. Tuttavia devo limitare il numero di prodotti
-                                                                //allo stretto necessario perche' rischio di accedere a un elemento non definito.
+
+        /**
+         * The ceiling operation let me consider all the entries in the case, these are not equally
+         * distributed among the threads beacuse I will consider the minimum greater integer.
+         * For example if I have 4 products and three cores, 1 product for
+         * each thread does not generate the product matrix entirely.
+         */
+        int entriesPerThread = (int) Math.ceil((double) getEntryCount(c)/(coreCount));
         Runnable runnable = new Runnable() {
             
             /*
@@ -425,7 +461,7 @@ public class Main{
                  * The value assigned to 'end' is the minimum because
                  * if the sum of all the products to execute by each thread
                  * is greater than the actual number of products, then
-                 * an ArrayIndexOutOfBoundException woul be thrown!
+                 * an ArrayIndexOutOfBoundException would be thrown!
                  * In that case products.length value is assigned instead.
                  */
                 int end = Math.min(start + entriesPerThread, products.length);
@@ -566,22 +602,43 @@ public class Main{
         }  
     }
 
+    /**
+     * This method executes the product using a cyclic barrier.
+     * The columns of the first matrix are divided among the threads.
+     * In general a single row-column product cannot be completed
+     * by just one thread because a thread does not have the access
+     * to a whole raw. A raw is divided among the threads.
+     * A thread multiply the accessible entries on its row with
+     * the corresponding entries on the column of the second matrix.
+     * Before passing to next column of the second matrix, it saves
+     * its entry products in the addends array and then waits for
+     * the other threads to finish saving the remaining entry
+     * products for that row-column products.
+     * So the thread waits for the others one at the barrier.
+     * When all the threads come in front of the barrier, the
+     * barrier action is executed and the result matrix c is written.
+     * 
+     * @param firstMatrix
+     * @param secondMatrix
+     * @param c
+     * @throws InterruptedException
+     */
     public static void barrierThreadMatrixProduct(int[][] firstMatrix, int[][] secondMatrix, int[][] c) throws InterruptedException{
         final int coreCount = Runtime.getRuntime().availableProcessors();
         int addends[] = new int[firstMatrix[0].length];
         Runnable barrierAction = new Runnable() {
-            int i = 0;
-            int j = 0;
+            int rowC = 0;
+            int colC = 0;
             @Override
             public void run() {
                 int sum = 0;
                 for (int addend : addends) {
                     sum = sum + addend;
                 }
-                c[i][j] = sum;
-                i = (i + 1) % firstMatrix.length;
-                if (i == 0){
-                    j = (j + 1) % secondMatrix[0].length;
+                c[rowC][colC] = sum;
+                rowC = (rowC + 1) % firstMatrix.length;
+                if (rowC == 0){
+                    colC = (colC + 1) % secondMatrix[0].length;
                 }
             } 
         };
