@@ -1,6 +1,6 @@
 # Thread Matricial product execution time comparator
 
-This Java program executes one or more matricial products by using different approaches offered by the Java platform.
+This Java program executes one or more matricial products by using different approaches, concerning threads, offered by the Java platform.
 Then for each of those is registered the execution time.
 
 ## Features
