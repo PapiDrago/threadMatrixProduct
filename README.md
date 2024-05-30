@@ -20,11 +20,11 @@ Then for each of those is registered the execution time.
 
 ## Usage
 
-1. Generating a particular number 'N' of matrix ready to be multiplied: 
+1. Generating a particular number 'N' of matrices ready to be multiplied: 
 ```sh
    java Main [N]
 ```
-2. Generating as many matrix as the command-line arguments with particular values for rows and columns:
+2. Generating as many matrices as the command-line arguments with particular values for rows and columns:
 ```sh
    java Main [rows],[columns]
 ```
